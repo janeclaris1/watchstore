@@ -1,0 +1,58 @@
+{
+  "name": "watchstore",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "db:generate": "prisma generate",
+    "db:push": "prisma db push",
+    "db:seed": "tsx prisma/seed.ts",
+    "images:download": "tsx scripts/download-watch-images.ts",
+    "images:download:omega": "tsx scripts/download-watch-images.ts omega",
+    "images:download:rolex": "tsx scripts/download-watch-images.ts rolex",
+    "images:download:daytona": "tsx scripts/download-wrist-collection.ts daytona",
+    "images:download:nautilus": "tsx scripts/download-wrist-collection.ts nautilus",
+    "images:download:aquanaut": "tsx scripts/download-wrist-collection.ts aquanaut",
+    "images:download:hublot": "tsx scripts/download-luxurytime-hublot.ts",
+    "db:studio": "prisma studio",
+    "postinstall": "prisma generate"
+  },
+  "dependencies": {
+    "@auth/prisma-adapter": "^2.7.4",
+    "@prisma/client": "^6.3.1",
+    "@stripe/stripe-js": "^5.5.0",
+    "algoliasearch": "^5.20.0",
+    "bcryptjs": "^2.4.3",
+    "cloudinary": "^2.5.1",
+    "clsx": "^2.1.1",
+    "lucide-react": "^0.474.0",
+    "next": "14.2.23",
+    "next-auth": "^4.24.11",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-instantsearch": "^7.15.3",
+    "stripe": "^17.6.0",
+    "tailwind-merge": "^2.6.0",
+    "zustand": "^5.0.3"
+  },
+  "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "@types/node": "^20",
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
+    "autoprefixer": "^10.4.20",
+    "eslint": "^8",
+    "eslint-config-next": "14.2.23",
+    "postcss": "^8",
+    "prisma": "^6.3.1",
+    "tailwindcss": "^3.4.1",
+    "tsx": "^4.19.2",
+    "typescript": "^5"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
+  }
+}

@@ -1,0 +1,190 @@
+import Link from "next/link";
+import Image from "next/image";
+import { notFound } from "next/navigation";
+import { requireAdminPage } from "@/lib/admin";
+import { prisma } from "@/lib/prisma";
+import { formatPrice } from "@/lib/utils";
+import { OrderStatusSelect } from "@/components/admin/OrderStatusSelect";
+
+export default async function AdminOrderDetailPage({
+  params,
+}: {
+  params: { id: string };
+}) {
+  await requireAdminPage();
+
+  const order = await prisma.order.findUnique({
+    where: { id: params.id },
+    include: {
+      items: {
+        include: {
+          watch: {
+            include: {
+              brand: true,
+              images: { orderBy: { sortOrder: "asc" }, take: 1 },
+            },
+          },
+        },
+      },
+      user: true,
+    },
+  });
+
+  if (!order) notFound();
+
+  return (
+    <div>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+        <div>
+          <Link
+            href="/admin/orders"
+            className="text-sm text-gold hover:text-gold-light mb-2 inline-block"
+          >
+            ← All orders
+          </Link>
+          <h1 className="font-playfair text-3xl">
+            Order #{order.id.slice(0, 8).toUpperCase()}
+          </h1>
+          <p className="text-sm text-wf-gray mt-1">
+            Placed {new Date(order.createdAt).toLocaleString()}
+          </p>
+        </div>
+        <div className="flex items-center gap-3">
+          <span className="text-sm text-wf-gray">Status</span>
+          <OrderStatusSelect
+            orderId={order.id}
+            status={order.status}
+            redirectTo={`/admin/orders/${order.id}`}
+          />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2 space-y-6">
+          <section className="bg-white border border-wf-border rounded-lg p-6">
+            <h2 className="font-playfair text-xl mb-4">Items</h2>
+            <ul className="divide-y divide-wf-border">
+              {order.items.map((item) => (
+                <li key={item.id} className="py-4 flex gap-4">
+                  <div className="relative w-20 h-20 bg-wf-light shrink-0 overflow-hidden">
+                    {item.watch.images[0] && (
+                      <Image
+                        src={item.watch.images[0].url}
+                        alt=""
+                        fill
+                        className="object-cover"
+                        sizes="80px"
+                      />
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <Link
+                      href={`/watches/${item.watch.slug}`}
+                      className="font-medium hover:text-gold"
+                    >
+                      {item.watch.brand.name} {item.watch.model}
+                    </Link>
+                    <p className="text-sm text-wf-gray">
+                      Ref. {item.watch.reference}
+                    </p>
+                    <p className="text-sm mt-1">
+                      {formatPrice(item.price)} × {item.quantity}
+                    </p>
+                  </div>
+                  <p className="font-medium">
+                    {formatPrice(item.price * item.quantity)}
+                  </p>
+                </li>
+              ))}
+            </ul>
+            <div className="border-t border-wf-border pt-4 mt-2 flex justify-between">
+              <span className="font-medium">Total</span>
+              <span className="font-playfair text-xl">
+                {formatPrice(order.total)}
+              </span>
+            </div>
+          </section>
+        </div>
+
+        <div className="space-y-6">
+          <section className="bg-white border border-wf-border rounded-lg p-6">
+            <h2 className="font-playfair text-xl mb-4">Customer</h2>
+            <dl className="space-y-3 text-sm">
+              <div>
+                <dt className="text-wf-gray">Email</dt>
+                <dd>
+                  <a
+                    href={`mailto:${order.email}`}
+                    className="text-gold hover:underline"
+                  >
+                    {order.email}
+                  </a>
+                </dd>
+              </div>
+              {order.user && (
+                <div>
+                  <dt className="text-wf-gray">Account</dt>
+                  <dd>{order.user.name || order.user.email}</dd>
+                </div>
+              )}
+            </dl>
+          </section>
+
+          <section className="bg-white border border-wf-border rounded-lg p-6">
+            <h2 className="font-playfair text-xl mb-4">Shipping</h2>
+            {order.shippingName || order.shippingAddress ? (
+              <address className="text-sm not-italic leading-relaxed text-wf-gray">
+                {order.shippingName && (
+                  <span className="block text-wf-black font-medium">
+                    {order.shippingName}
+                  </span>
+                )}
+                {order.shippingAddress && <span className="block">{order.shippingAddress}</span>}
+                {(order.shippingCity || order.shippingPostcode) && (
+                  <span className="block">
+                    {[order.shippingCity, order.shippingPostcode]
+                      .filter(Boolean)
+                      .join(" ")}
+                  </span>
+                )}
+                {order.shippingCountry && (
+                  <span className="block">{order.shippingCountry}</span>
+                )}
+              </address>
+            ) : (
+              <p className="text-sm text-wf-gray">
+                Shipping details appear after Stripe checkout completes.
+              </p>
+            )}
+          </section>
+
+          <section className="bg-white border border-wf-border rounded-lg p-6">
+            <h2 className="font-playfair text-xl mb-4">Payment</h2>
+            <dl className="space-y-3 text-sm">
+              <div>
+                <dt className="text-wf-gray">Status</dt>
+                <dd>{order.status}</dd>
+              </div>
+              {order.stripeSessionId && (
+                <div>
+                  <dt className="text-wf-gray">Stripe session</dt>
+                  <dd className="font-mono text-xs break-all">
+                    {order.stripeSessionId}
+                  </dd>
+                </div>
+              )}
+              {order.stripePaymentId && (
+                <div>
+                  <dt className="text-wf-gray">Payment intent</dt>
+                  <dd className="font-mono text-xs break-all">
+                    {order.stripePaymentId}
+                  </dd>
+                </div>
+              )}
+            </dl>
+          </section>
+        </div>
+      </div>
+    </div>
+  );
+}
