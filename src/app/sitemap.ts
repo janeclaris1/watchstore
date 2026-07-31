@@ -1,8 +1,28 @@
 import { MetadataRoute } from "next";
 import { prisma } from "@/lib/prisma";
 
+function siteUrl() {
+  const raw =
+    process.env.NEXT_PUBLIC_SITE_URL ||
+    process.env.NEXTAUTH_URL ||
+    "https://cosyaura.us";
+  return raw.replace(/\/$/, "");
+}
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
+  const baseUrl = siteUrl();
+
+  const staticPages = [
+    "/about",
+    "/careers",
+    "/press",
+    "/sustainability",
+    "/faq",
+    "/shipping",
+    "/returns",
+    "/contact",
+    "/privacy",
+  ];
 
   try {
     const [watches, brands] = await Promise.all([
@@ -10,22 +30,19 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       prisma.brand.findMany({ select: { slug: true, updatedAt: true } }),
     ]);
 
-    const staticPages = [
-      "/about",
-      "/careers",
-      "/press",
-      "/sustainability",
-      "/faq",
-      "/shipping",
-      "/returns",
-      "/contact",
-      "/wishlist",
-      "/cart",
-    ];
-
     return [
-      { url: baseUrl, lastModified: new Date(), changeFrequency: "daily", priority: 1 },
-      { url: `${baseUrl}/watches`, lastModified: new Date(), changeFrequency: "daily", priority: 0.9 },
+      {
+        url: baseUrl,
+        lastModified: new Date(),
+        changeFrequency: "daily",
+        priority: 1,
+      },
+      {
+        url: `${baseUrl}/watches`,
+        lastModified: new Date(),
+        changeFrequency: "daily",
+        priority: 0.9,
+      },
       ...staticPages.map((path) => ({
         url: `${baseUrl}${path}`,
         lastModified: new Date(),
@@ -47,7 +64,24 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ];
   } catch {
     return [
-      { url: baseUrl, lastModified: new Date(), changeFrequency: "daily", priority: 1 },
+      {
+        url: baseUrl,
+        lastModified: new Date(),
+        changeFrequency: "daily",
+        priority: 1,
+      },
+      {
+        url: `${baseUrl}/watches`,
+        lastModified: new Date(),
+        changeFrequency: "daily",
+        priority: 0.9,
+      },
+      ...staticPages.map((path) => ({
+        url: `${baseUrl}${path}`,
+        lastModified: new Date(),
+        changeFrequency: "monthly" as const,
+        priority: 0.5,
+      })),
     ];
   }
 }
