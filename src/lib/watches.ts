@@ -120,7 +120,8 @@ export async function getWatches(filters: WatchListFilters = {}) {
     ]);
 
     return { watches, total, pages: Math.ceil(total / limit), page, limit };
-  } catch {
+  } catch (error) {
+    console.error("[getWatches] database error:", error);
     return { watches: [], total: 0, pages: 0, page: 1, limit: filters.limit || WATCH_PAGE_SIZE };
   }
 }
@@ -171,7 +172,8 @@ export async function getWatchesByBrand(
 export async function getAllBrands() {
   try {
     return await prisma.brand.findMany({ orderBy: { name: "asc" } });
-  } catch {
+  } catch (error) {
+    console.error("[getAllBrands] database error:", error);
     return [];
   }
 }
@@ -225,7 +227,8 @@ export async function getFilterOptions(brandSlug?: string) {
 export async function getBrandBySlug(slug: string) {
   try {
     return await prisma.brand.findUnique({ where: { slug } });
-  } catch {
+  } catch (error) {
+    console.error("[getBrandBySlug] database error:", error);
     return null;
   }
 }
