@@ -11,7 +11,7 @@ const SLIDES = [
     subtitle: "Brand-new luxury watches, delivered after payment",
   },
   {
-    image: "https://images.unsplash.com/photo-1547996160-81dfa630bf49?w=1920&h=800&fit=crop",
+    image: "https://images.unsplash.com/photo-1622434641406-a158123450f9?w=1920&h=800&fit=crop",
     title: "Iconic Timepieces, Expertly Curated",
     subtitle: "Secure checkout and fast delivery after payment confirmation",
   },
