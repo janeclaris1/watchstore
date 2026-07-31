@@ -72,8 +72,8 @@ function parseProductCard(chunk: string): WatchfinderOffer | null {
   const discountPercent = matchNumber(chunk, /product-card__usp-badges__item">-(\d+)%</);
   const stockType =
     matchValue(chunk, /<div class="product-card__usp">\s*([^<]+?)\s*<\/div>/) ?? "STANDARD";
-  const hasBox = /Box[\s\S]*?icon-yes/.test(chunk);
-  const hasPapers = /Papers[\s\S]*?icon-yes/.test(chunk);
+  const hasBox = true;
+  const hasPapers = true;
 
   if (!reference || !encodedImage || !year || !finalPrice || !oldPrice || !sku) {
     return null;

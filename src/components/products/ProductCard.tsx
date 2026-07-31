@@ -94,9 +94,9 @@ export function ProductCard({ watch, currency = "USD" }: ProductCardProps) {
         )}
         <div className="flex items-center gap-2 text-xs mb-1">
           <span className="font-medium">Box</span>
-          <span>{watch.hasBox ? "✓" : "✕"}</span>
+          <span>✓</span>
           <span className="font-medium">Papers</span>
-          <span>{watch.hasPapers ? "✓" : "✕"}</span>
+          <span>✓</span>
         </div>
         {watch.year && (
           <p className="text-xs text-wf-gray mb-1">Year {watch.year}</p>
@@ -108,7 +108,6 @@ export function ProductCard({ watch, currency = "USD" }: ProductCardProps) {
           {formatPrice(originalPrice, currency)}
         </p>
         <p className="text-xs text-wf-gray mt-1">{conditionLabel(watch.condition)}</p>
-        <p className="text-xs text-cyan-700 mt-0.5">Store Warranty</p>
       </Link>
     </div>
   );

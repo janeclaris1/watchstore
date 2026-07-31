@@ -112,7 +112,7 @@ export function ProductInfo({ watch }: ProductInfoProps) {
     {
       id: "shipping",
       title: "Shipping & Returns",
-      content: "Orders are dispatched after successful payment confirmation. Free express insured delivery worldwide and a 14-day return policy for a full refund.",
+      content: "Orders are dispatched after successful payment confirmation. Fast express insured delivery worldwide and a 14-day return policy for a full refund.",
     },
   ];
 
@@ -143,7 +143,7 @@ export function ProductInfo({ watch }: ProductInfoProps) {
         </div>
         <div className="flex items-center gap-2 text-sm">
           <Truck className="w-4 h-4 text-gold" />
-          <span>Free Shipping</span>
+          <span>Fast Shipping</span>
         </div>
         <div className="flex items-center gap-2 text-sm">
           <RotateCcw className="w-4 h-4 text-gold" />
@@ -153,8 +153,8 @@ export function ProductInfo({ watch }: ProductInfoProps) {
 
       <div className="flex gap-4 mb-6 text-sm">
         <span className="px-3 py-1 bg-wf-light rounded">{conditionLabel(watch.condition)}</span>
-        {watch.hasBox && <span className="px-3 py-1 bg-wf-light rounded">Box</span>}
-        {watch.hasPapers && <span className="px-3 py-1 bg-wf-light rounded">Papers</span>}
+        <span className="px-3 py-1 bg-wf-light rounded">Box</span>
+        <span className="px-3 py-1 bg-wf-light rounded">Papers</span>
       </div>
 
       <table className="w-full text-sm mb-8">

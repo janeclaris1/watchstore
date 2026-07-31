@@ -35,8 +35,8 @@ export default function SustainabilityPage() {
       <ContentSection title="Our approach">
         <p>
           Watches that endure are inherently more sustainable than short-cycle
-          goods. We sell brand-new pieces intended for long ownership, backed by
-          warranty support so they stay in use.
+          goods. We sell brand-new pieces intended for long ownership so they
+          stay in use for years.
         </p>
       </ContentSection>
 

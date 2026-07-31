@@ -17,11 +17,26 @@ export function formatPrice(price: number, currency = "USD"): string {
 
 /** Map any catalog price into \$299.99–\$499.99 (max under \$500, always ends in .99). */
 export function toStorefrontPrice(seed: string): number {
+  return toStorefrontPriceInRange(seed, 299, 499);
+}
+
+/** Rolex Daytona storefront range: \$1149.99–\$1599.99 (always ends in .99). */
+export function toDaytonaPrice(seed: string): number {
+  return toStorefrontPriceInRange(seed, 1149, 1599);
+}
+
+/** Deterministic .99 price in an inclusive whole-dollar range. */
+export function toStorefrontPriceInRange(
+  seed: string,
+  minDollars: number,
+  maxDollars: number
+): number {
   let hash = 0;
   for (let i = 0; i < seed.length; i += 1) {
     hash = (hash * 31 + seed.charCodeAt(i)) >>> 0;
   }
-  const dollars = 299 + (hash % 201); // 299..499
+  const span = Math.max(0, maxDollars - minDollars);
+  const dollars = minDollars + (hash % (span + 1));
   return Number((dollars + 0.99).toFixed(2));
 }
 

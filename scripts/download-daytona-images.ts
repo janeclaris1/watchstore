@@ -15,7 +15,7 @@ async function main() {
 
   let done = 0;
   for (const product of products) {
-    const localPath = await downloadWristAficionadoImage(product.sku, product.imageUrl);
+    const localPath = await downloadWristAficionadoImage(product);
     done += 1;
     console.log(`[${done}/${products.length}] ${product.reference} (${product.sku}) -> ${localPath}`);
   }

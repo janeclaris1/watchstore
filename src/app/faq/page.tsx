@@ -9,7 +9,7 @@ import { FaqAccordion } from "@/components/content/FaqAccordion";
 export const metadata: Metadata = {
   title: "FAQ",
   description:
-    "Answers to common questions about ordering, shipping, returns, and warranty at COSY AURA WATCH STORE.",
+    "Answers to common questions about ordering, shipping, and returns at COSY AURA WATCH STORE.",
 };
 
 const FAQS = [
@@ -27,11 +27,6 @@ const FAQS = [
     question: "What payment methods do you accept?",
     answer:
       "We accept major credit and debit cards via Stripe secure checkout, including Visa, Mastercard, and American Express.",
-  },
-  {
-    question: "Do you offer a warranty?",
-    answer:
-      "Yes. Every purchase includes our 12-month store warranty covering manufacturing defects under normal use. Full terms are on our Warranty page.",
   },
   {
     question: "What is your returns policy?",

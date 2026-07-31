@@ -212,6 +212,10 @@ export function ActiveFilters({ brandSlug }: { brandSlug?: string }) {
     maxYear: "To Year",
     gender: "Gender",
     category: "Category",
+    series: "Series",
+    caseSize: "Case Size",
+    brand: "Brand",
+    brandSlug: "Brand",
   };
 
   searchParams.forEach((value, key) => {

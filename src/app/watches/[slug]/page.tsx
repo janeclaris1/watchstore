@@ -12,6 +12,7 @@ import {
   getBrandBySlug,
   getAllWatchSlugs,
   getAllBrands,
+  getFilterOptions,
   parseWatchListFilters,
   WATCH_PAGE_SIZE,
 } from "@/lib/watches";
@@ -79,12 +80,21 @@ async function BrandListing({
     limit: WATCH_PAGE_SIZE,
   });
 
-  const { watches, total } = await getWatches(filters);
+  const [{ watches, total }, options] = await Promise.all([
+    getWatches(filters),
+    getFilterOptions(brandSlug),
+  ]);
 
   return (
     <div className="max-w-[1500px] mx-auto px-4 py-6">
       <Suspense>
-        <ProductToolbar total={total} brandSlug={brandSlug} />
+        <ProductToolbar
+          total={total}
+          brandSlug={brandSlug}
+          brands={options.brands}
+          series={options.series}
+          caseSizes={options.caseSizes}
+        />
       </Suspense>
       <Suspense>
         <ActiveFilters brandSlug={brandSlug} />

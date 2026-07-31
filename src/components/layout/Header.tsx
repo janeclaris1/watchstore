@@ -215,13 +215,6 @@ export function Header() {
               </Link>
             ))}
           </NavDropdown>
-
-          <Link
-            href="/watches?category=accessories"
-            className="px-4 py-3 text-sm text-wf-black hover:text-gold transition-colors"
-          >
-            Straps & Accessories
-          </Link>
         </div>
       </nav>
 

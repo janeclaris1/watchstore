@@ -10,6 +10,8 @@ export const WATCH_PAGE_SIZE = 18;
 
 export interface WatchListFilters {
   brandSlug?: string;
+  seriesSlug?: string;
+  caseSize?: string;
   minPrice?: number;
   maxPrice?: number;
   conditions?: string[];
@@ -37,7 +39,9 @@ export function parseWatchListFilters(
   };
 
   return {
-    brandSlug: overrides.brandSlug ?? get("brandSlug"),
+    brandSlug: overrides.brandSlug ?? get("brandSlug") ?? get("brand"),
+    seriesSlug: get("series"),
+    caseSize: get("caseSize"),
     minPrice: get("minPrice") ? Number(get("minPrice")) : undefined,
     maxPrice: get("maxPrice") ? Number(get("maxPrice")) : undefined,
     conditions: get("condition")?.split(",").filter(Boolean),
@@ -64,6 +68,14 @@ export async function getWatches(filters: WatchListFilters = {}) {
 
     if (filters.brandSlug) {
       where.brand = { slug: filters.brandSlug };
+    }
+
+    if (filters.seriesSlug) {
+      where.series = { slug: filters.seriesSlug };
+    }
+
+    if (filters.caseSize) {
+      where.caseSize = filters.caseSize;
     }
 
     if (filters.minPrice || filters.maxPrice) {
@@ -161,6 +173,52 @@ export async function getAllBrands() {
     return await prisma.brand.findMany({ orderBy: { name: "asc" } });
   } catch {
     return [];
+  }
+}
+
+export async function getFilterOptions(brandSlug?: string) {
+  try {
+    const brand = brandSlug
+      ? await prisma.brand.findUnique({ where: { slug: brandSlug } })
+      : null;
+
+    const [brands, series, caseSizes] = await Promise.all([
+      prisma.brand.findMany({
+        orderBy: { name: "asc" },
+        select: { id: true, name: true, slug: true },
+      }),
+      prisma.series.findMany({
+        where: brand ? { brandId: brand.id } : undefined,
+        orderBy: { name: "asc" },
+        select: {
+          id: true,
+          name: true,
+          slug: true,
+          brand: { select: { slug: true, name: true } },
+        },
+      }),
+      prisma.watch.findMany({
+        where: {
+          caseSize: { not: null },
+          ...(brand ? { brandId: brand.id } : {}),
+        },
+        distinct: ["caseSize"],
+        select: { caseSize: true },
+        orderBy: { caseSize: "asc" },
+      }),
+    ]);
+
+    return {
+      brands,
+      series,
+      caseSizes: caseSizes
+        .map((row) => row.caseSize)
+        .filter((size): size is string => Boolean(size))
+        .filter((size) => /\d/.test(size) && !/^[0-9]mm$/.test(size))
+        .sort((a, b) => parseFloat(a) - parseFloat(b)),
+    };
+  } catch {
+    return { brands: [], series: [], caseSizes: [] as string[] };
   }
 }
 

@@ -53,8 +53,7 @@ export default function PressPage() {
           COSY AURA WATCH STORE is an online luxury watch retailer specializing
           in brand-new timepieces from Rolex, Patex Philippe, Omega, Hublot,
           Cartier, and Louis Vuitton. Orders are fulfilled after successful
-          payment confirmation, with a 12-month store warranty and a 14-day
-          returns window.
+          payment confirmation, with a 14-day returns window.
         </p>
       </ContentSection>
 

@@ -19,7 +19,7 @@ import {
   downloadWosImages,
   fetchWosCollection,
 } from "../src/lib/watchesofswitzerland";
-import { toStorefrontPrice } from "../src/lib/utils";
+import { toDaytonaPrice, toStorefrontPrice } from "../src/lib/utils";
 
 const prisma = new PrismaClient();
 
@@ -182,7 +182,11 @@ function buildConditionReport(offer: WatchfinderOffer) {
 }
 
 function buildWristDescription(product: WristAficionadoProduct) {
-  const price = toStorefrontPrice(`${product.sku}-${product.reference}`);
+  const seed = `${product.sku}-${product.reference}`;
+  const price =
+    product.series.toLowerCase() === "daytona"
+      ? toDaytonaPrice(seed)
+      : toStorefrontPrice(seed);
   const base =
     product.description ||
     `${product.brand} ${product.series} ${product.reference}.`;
@@ -269,8 +273,8 @@ async function seedBrandFromWatchfinder(brandSlug: string) {
         dial: "Black",
         waterResistance: inferWaterResistance(offer.series),
         gender: inferGender(offer.series),
-        hasBox: offer.hasBox,
-        hasPapers: offer.hasPapers,
+        hasBox: true,
+        hasPapers: true,
         featured: true,
         category: inferCategory(offer.series),
         images: {
@@ -343,6 +347,11 @@ async function seedWristAficionadoCollection(options: {
     const stockType = year <= 2000 ? "VINTAGE" : "STANDARD";
     const isLadies =
       /ladies|lady/i.test(product.title) || product.series.toLowerCase().includes("ladies");
+    const priceSeed = `${product.sku}-${product.reference}`;
+    const price =
+      options.seriesSlug === "daytona" || product.series.toLowerCase() === "daytona"
+        ? toDaytonaPrice(priceSeed)
+        : toStorefrontPrice(priceSeed);
 
     await prisma.watch.create({
       data: {
@@ -355,7 +364,7 @@ async function seedWristAficionadoCollection(options: {
         conditionReport: product.available
           ? "Available for purchase. Full condition details on request."
           : "Listing imported from supplier catalog.",
-        price: toStorefrontPrice(`${product.sku}-${product.reference}`),
+        price,
         condition: inferCondition(stockType, product.year),
         year: product.year,
         movement: product.movement,
@@ -370,8 +379,8 @@ async function seedWristAficionadoCollection(options: {
               ? "120m"
               : "100m",
         gender: isLadies ? "WOMENS" : "UNISEX",
-        hasBox: product.hasBox,
-        hasPapers: product.hasPapers,
+        hasBox: true,
+        hasPapers: true,
         featured: true,
         category:
           product.series.toLowerCase() === "aquanaut" ||
@@ -470,8 +479,8 @@ async function seedHublotFromLuxurytime() {
         dial: product.dial ?? "Black",
         waterResistance: "100m",
         gender: product.gender,
-        hasBox: product.hasBox,
-        hasPapers: product.hasPapers,
+        hasBox: true,
+        hasPapers: true,
         featured: true,
         category: "Sport Watches",
         images: {
@@ -553,8 +562,8 @@ async function seedCartierFromWatchesOfSwitzerland() {
         dial: product.dial ?? "Silver",
         waterResistance: "30m",
         gender: product.gender,
-        hasBox: product.hasBox,
-        hasPapers: product.hasPapers,
+        hasBox: true,
+        hasPapers: true,
         featured: true,
         category: product.category,
         images: {

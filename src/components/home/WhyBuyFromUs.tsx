@@ -1,11 +1,6 @@
-import { Shield, CheckCircle, Truck, Star } from "lucide-react";
+import { CheckCircle, Truck, Star } from "lucide-react";
 
 const FEATURES = [
-  {
-    icon: Shield,
-    title: "12-Month Warranty",
-    description: "Every new watch includes our 12-month warranty for complete peace of mind.",
-  },
   {
     icon: CheckCircle,
     title: "Brand-New Watches",
@@ -28,7 +23,7 @@ export function WhyBuyFromUs() {
     <section className="py-16 px-4 bg-wf-light">
       <div className="max-w-7xl mx-auto">
         <h2 className="font-playfair text-3xl text-center mb-12">Why Buy From Us</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
           {FEATURES.map((feature) => (
             <div key={feature.title} className="text-center">
               <div className="w-14 h-14 mx-auto mb-4 rounded-full bg-gold/10 flex items-center justify-center">
