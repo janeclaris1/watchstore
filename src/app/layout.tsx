@@ -27,6 +27,9 @@ export const metadata: Metadata = {
   description:
     "Discover brand-new luxury watches. Secure payment with dispatch and delivery after payment confirmation.",
   keywords: ["luxury watches", "new watches", "Rolex", "Omega", "Patek Philippe", "Cartier"],
+  other: {
+    "algolia-site-verification": "163E676A1222ACC2",
+  },
 };
 
 export default function RootLayout({
@@ -36,6 +39,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={`${playfair.variable} ${inter.variable}`}>
+      <head>
+        <meta name="algolia-site-verification" content="163E676A1222ACC2" />
+      </head>
       <body>
         <Providers>
           <Header />
