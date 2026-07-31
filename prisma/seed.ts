@@ -589,6 +589,8 @@ async function seedCartierFromWatchesOfSwitzerland() {
 async function main() {
   console.log("Seeding database...");
 
+  const only = process.env.SEED_ONLY?.trim().toLowerCase();
+
   const hashedPassword = await bcrypt.hash("admin123", 12);
   await prisma.user.upsert({
     where: { email: "admin@cosyaurawatchstore.com" },
@@ -607,6 +609,12 @@ async function main() {
       update: { name: brand.name, logo: brand.logo },
       create: brand,
     });
+  }
+
+  if (only === "cartier") {
+    await seedCartierFromWatchesOfSwitzerland();
+    console.log("Seeding complete!");
+    return;
   }
 
   for (const brandSlug of WATCHFINDER_BRANDS) {

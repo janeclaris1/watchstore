@@ -27,6 +27,9 @@ yarn-error.log*
 .env*.local
 .env
 
+# local MongoDB data (scripts/start-local-mongo.ts)
+.mongo-data/
+
 # cursor
 .cursor/
 

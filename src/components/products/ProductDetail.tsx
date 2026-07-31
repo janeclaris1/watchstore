@@ -117,7 +117,7 @@ export function ProductInfo({ watch }: ProductInfoProps) {
   ];
 
   return (
-    <div>
+    <div data-watch-product data-brand={watch.brand.name} data-model={watch.model} data-reference={watch.reference} data-price={watch.price}>
       <nav className="text-sm text-wf-gray mb-4">
         <a href="/" className="hover:text-gold">Home</a>
         <span className="mx-2">/</span>
@@ -128,13 +128,13 @@ export function ProductInfo({ watch }: ProductInfoProps) {
         <span className="text-wf-black">{watch.model}</span>
       </nav>
 
-      <p className="text-xs uppercase tracking-wider font-semibold text-wf-gray mb-1">
+      <p className="text-xs uppercase tracking-wider font-semibold text-wf-gray mb-1" data-watch-brand>
         {watch.brand.name}
       </p>
-      <h1 className="font-playfair text-3xl md:text-4xl mb-2">{watch.model}</h1>
-      <p className="text-sm text-wf-gray mb-4">Ref. {watch.reference}</p>
+      <h1 className="font-playfair text-3xl md:text-4xl mb-2" data-watch-model>{watch.model}</h1>
+      <p className="text-sm text-wf-gray mb-4" data-watch-reference>Ref. {watch.reference}</p>
 
-      <p className="font-playfair text-3xl text-gold mb-6">{formatPrice(watch.price)}</p>
+      <p className="font-playfair text-3xl text-gold mb-6" data-watch-price>{formatPrice(watch.price)}</p>
 
       <div className="flex flex-wrap gap-4 mb-6">
         <div className="flex items-center gap-2 text-sm">
