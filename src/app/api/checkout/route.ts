@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { stripe } from "@/lib/stripe";
+import { fetchLiveShippingRates, findRateById } from "@/lib/shipping";
 
 function toAbsoluteImageUrl(url: string | undefined | null): string | null {
   if (!url) return null;
@@ -19,6 +20,10 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Invalid request" }, { status: 400 });
     }
 
+    if (!shipping?.address || !shipping?.city || !shipping?.postcode || !shipping?.country) {
+      return NextResponse.json({ error: "Shipping address required" }, { status: 400 });
+    }
+
     if (!process.env.STRIPE_SECRET_KEY?.startsWith("sk_")) {
       console.error(
         "Checkout error: STRIPE_SECRET_KEY must be a secret key starting with sk_test_ or sk_live_"
@@ -32,27 +37,56 @@ export async function POST(req: Request) {
       );
     }
 
-    const total = items.reduce(
+    const country = String(shipping.country);
+    const quote = await fetchLiveShippingRates({
+      name: shipping.name,
+      street1: shipping.address,
+      city: shipping.city,
+      state: shipping.state,
+      zip: shipping.postcode,
+      country,
+      email,
+    });
+
+    const selectedRate =
+      findRateById(quote.rates, shipping.rateId) || quote.rates[0];
+
+    if (!selectedRate) {
+      return NextResponse.json(
+        { error: "No shipping rates available for this address" },
+        { status: 400 }
+      );
+    }
+
+    const shippingCost = selectedRate.price;
+    const shippingMethodLabel = `${selectedRate.carrier} · ${selectedRate.service}`;
+
+    const itemsTotal = items.reduce(
       (sum: number, item: { price: number; quantity: number }) =>
         sum + item.price * item.quantity,
       0
     );
+    const total = itemsTotal + shippingCost;
 
     const order = await prisma.order.create({
       data: {
         email,
         total,
+        shippingMethod: shippingMethodLabel,
+        shippingCost,
         shippingName: shipping?.name,
         shippingAddress: shipping?.address,
         shippingCity: shipping?.city,
         shippingPostcode: shipping?.postcode,
-        shippingCountry: shipping?.country,
+        shippingCountry: country,
         items: {
-          create: items.map((item: { watchId: string; price: number; quantity: number }) => ({
-            watchId: item.watchId,
-            price: item.price,
-            quantity: item.quantity,
-          })),
+          create: items.map(
+            (item: { watchId: string; price: number; quantity: number }) => ({
+              watchId: item.watchId,
+              price: item.price,
+              quantity: item.quantity,
+            })
+          ),
         },
       },
     });
@@ -85,7 +119,21 @@ export async function POST(req: Request) {
       })
     );
 
-    const baseUrl = process.env.NEXTAUTH_URL?.replace(/\/$/, "") || "http://localhost:3000";
+    if (shippingCost > 0) {
+      lineItems.push({
+        price_data: {
+          currency: "usd",
+          product_data: {
+            name: `Shipping — ${selectedRate.name}`,
+          },
+          unit_amount: Math.round(shippingCost * 100),
+        },
+        quantity: 1,
+      });
+    }
+
+    const baseUrl =
+      process.env.NEXTAUTH_URL?.replace(/\/$/, "") || "http://localhost:3000";
 
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
@@ -94,7 +142,12 @@ export async function POST(req: Request) {
       success_url: `${baseUrl}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${baseUrl}/cart`,
       customer_email: email,
-      metadata: { orderId: order.id },
+      metadata: {
+        orderId: order.id,
+        shippingMethod: shippingMethodLabel,
+        shippingRateId: selectedRate.id,
+        shippingSource: quote.source,
+      },
     });
 
     await prisma.order.update({

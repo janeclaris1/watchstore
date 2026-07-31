@@ -206,6 +206,8 @@ model Order {
   total            Float
   stripeSessionId  String?     @unique
   stripePaymentId  String?
+  shippingMethod   String?
+  shippingCost     Float       @default(0)
   shippingName     String?
   shippingAddress  String?
   shippingCity     String?

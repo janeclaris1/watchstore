@@ -21,7 +21,7 @@ const FAQS = [
   {
     question: "When will my watch ship?",
     answer:
-      "Your order is prepared after payment confirmation. Most orders dispatch within 1–3 business days, with express delivery options available at checkout.",
+      "Your order is prepared after payment confirmation. Most orders dispatch within 1–3 business days. Choose Aramex, FedEx, or DHL Express at checkout.",
   },
   {
     question: "What payment methods do you accept?",
@@ -41,7 +41,7 @@ const FAQS = [
   {
     question: "Do you ship internationally?",
     answer:
-      "We currently focus on domestic delivery with select international destinations. Shipping options and estimated times appear at checkout.",
+      "We ship with Aramex, FedEx, and DHL Express to supported destinations. Courier options, prices, and estimated times appear at checkout.",
   },
   {
     question: "How do I track my order?",

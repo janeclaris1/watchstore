@@ -33,14 +33,23 @@ export default function ShippingPage() {
       <ContentSection title="Delivery options">
         <ul className="list-disc pl-5 space-y-2">
           <li>
-            <strong className="text-wf-black">Standard:</strong> tracked delivery,
-            typically 3–7 business days after dispatch.
+            <strong className="text-wf-black">Aramex</strong> — tracked courier
+            service with discreet packaging.
           </li>
           <li>
-            <strong className="text-wf-black">Express:</strong> priority handling
-            with faster transit where available.
+            <strong className="text-wf-black">FedEx</strong> — insured domestic and
+            international delivery.
+          </li>
+          <li>
+            <strong className="text-wf-black">DHL Express</strong> — priority express
+            with full tracking.
           </li>
         </ul>
+        <p className="mt-4">
+          Live carrier prices are calculated at checkout from your delivery address.
+          Duties and taxes on international orders (if applicable) are the buyer’s
+          responsibility unless stated otherwise.
+        </p>
       </ContentSection>
 
       <ContentSection title="Packaging & security">

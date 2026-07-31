@@ -73,7 +73,7 @@ export default function CartPage() {
             </div>
             <div className="flex justify-between">
               <span className="text-wf-gray">Shipping</span>
-              <span className="text-green-600">Free</span>
+              <span className="text-wf-gray">Calculated at checkout</span>
             </div>
           </div>
           <div className="flex justify-between font-playfair text-xl text-gold border-t border-wf-border pt-4 mb-6">

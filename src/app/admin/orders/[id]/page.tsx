@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { requireAdminPage } from "@/lib/admin";
 import { prisma } from "@/lib/prisma";
 import { formatPrice } from "@/lib/utils";
+import { getShippingMethod } from "@/lib/shipping";
 import { OrderStatusSelect } from "@/components/admin/OrderStatusSelect";
 
 export default async function AdminOrderDetailPage({
@@ -97,11 +98,30 @@ export default async function AdminOrderDetailPage({
                 </li>
               ))}
             </ul>
-            <div className="border-t border-wf-border pt-4 mt-2 flex justify-between">
-              <span className="font-medium">Total</span>
-              <span className="font-playfair text-xl">
-                {formatPrice(order.total)}
-              </span>
+            <div className="border-t border-wf-border pt-4 mt-2 space-y-2 text-sm">
+              <div className="flex justify-between">
+                <span className="text-wf-gray">Subtotal</span>
+                <span>{formatPrice(order.total - (order.shippingCost ?? 0))}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-wf-gray">
+                  Shipping
+                  {order.shippingMethod
+                    ? ` (${getShippingMethod(order.shippingMethod)?.name ?? order.shippingMethod})`
+                    : ""}
+                </span>
+                <span>
+                  {(order.shippingCost ?? 0) === 0
+                    ? "Free"
+                    : formatPrice(order.shippingCost ?? 0)}
+                </span>
+              </div>
+              <div className="flex justify-between pt-2">
+                <span className="font-medium">Total</span>
+                <span className="font-playfair text-xl">
+                  {formatPrice(order.total)}
+                </span>
+              </div>
             </div>
           </section>
         </div>
@@ -132,6 +152,16 @@ export default async function AdminOrderDetailPage({
 
           <section className="bg-white border border-wf-border rounded-lg p-6">
             <h2 className="font-playfair text-xl mb-4">Shipping</h2>
+            {order.shippingMethod && (
+              <p className="text-sm mb-3">
+                <span className="text-wf-gray">Method: </span>
+                {getShippingMethod(order.shippingMethod)?.name ?? order.shippingMethod}
+                {" · "}
+                {(order.shippingCost ?? 0) === 0
+                  ? "Free"
+                  : formatPrice(order.shippingCost ?? 0)}
+              </p>
+            )}
             {order.shippingName || order.shippingAddress ? (
               <address className="text-sm not-italic leading-relaxed text-wf-gray">
                 {order.shippingName && (
