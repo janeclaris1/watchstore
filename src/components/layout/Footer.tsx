@@ -17,6 +17,7 @@ const SUPPORT_LINKS = [
   { label: "FAQ", href: "/faq" },
   { label: "Shipping", href: "/shipping" },
   { label: "Returns", href: "/returns" },
+  { label: "Privacy Policy", href: "/privacy" },
   { label: "Contact", href: "/contact" },
 ];
 

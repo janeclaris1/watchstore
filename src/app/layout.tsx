@@ -3,6 +3,7 @@ import { Playfair_Display, Inter } from "next/font/google";
 import "./globals.css";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
+import { CookieConsent } from "@/components/layout/CookieConsent";
 import { CartDrawer } from "@/components/cart/CartDrawer";
 import { Providers } from "@/components/Providers";
 
@@ -41,6 +42,7 @@ export default function RootLayout({
           <main className="min-h-screen">{children}</main>
           <Footer />
           <CartDrawer />
+          <CookieConsent />
         </Providers>
       </body>
     </html>

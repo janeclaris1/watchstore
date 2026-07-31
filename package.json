@@ -17,6 +17,7 @@
     "images:download:nautilus": "tsx scripts/download-wrist-collection.ts nautilus",
     "images:download:aquanaut": "tsx scripts/download-wrist-collection.ts aquanaut",
     "images:download:hublot": "tsx scripts/download-luxurytime-hublot.ts",
+    "db:seed:louis-vuitton": "tsx scripts/seed-louis-vuitton.ts",
     "db:studio": "prisma studio",
     "postinstall": "prisma generate"
   },
