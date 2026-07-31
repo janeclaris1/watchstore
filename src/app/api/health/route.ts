@@ -13,7 +13,7 @@ export async function GET() {
         : url
           ? "other"
           : "missing",
-    hasWatchstoreDb: url.includes("/watchstore"),
+    hasWatchstoreDb: url.includes("/watchstore") || url.includes("/neondb"),
     host: (() => {
       try {
         return new URL(
