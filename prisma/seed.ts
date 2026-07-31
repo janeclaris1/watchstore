@@ -19,11 +19,6 @@ import {
   downloadWosImages,
   fetchWosCollection,
 } from "../src/lib/watchesofswitzerland";
-import {
-  downloadTwpLvImages,
-  fetchTwpLouisVuittonProducts,
-  toLouisVuittonPrice,
-} from "../src/lib/thewatchpages";
 import { toDaytonaPrice, toStorefrontPrice } from "../src/lib/utils";
 
 const prisma = new PrismaClient();
@@ -591,87 +586,6 @@ async function seedCartierFromWatchesOfSwitzerland() {
   console.log(`Imported ${imported} Cartier watches from Watches of Switzerland.`);
 }
 
-async function seedLouisVuittonFromTheWatchPages() {
-  const brand = await prisma.brand.findUnique({ where: { slug: "louis-vuitton" } });
-  if (!brand) {
-    console.warn("Louis Vuitton brand not found");
-    return;
-  }
-
-  console.log("Importing Louis Vuitton watches from The Watch Pages catalogue...");
-  const products = fetchTwpLouisVuittonProducts();
-
-  await deleteWatchesByImagePrefix(
-    brand.id,
-    "/images/watches/thewatchpages/louis-vuitton/"
-  );
-
-  let imported = 0;
-  for (const product of products) {
-    const series = await prisma.series.upsert({
-      where: {
-        brandId_slug: {
-          brandId: brand.id,
-          slug: slugify(product.series),
-        },
-      },
-      update: { name: product.series },
-      create: {
-        brandId: brand.id,
-        name: product.series,
-        slug: slugify(product.series),
-      },
-    });
-
-    const imagePaths = await downloadTwpLvImages(product);
-    if (imagePaths.length === 0) {
-      console.warn(`  skip ${product.reference}: no images`);
-      continue;
-    }
-
-    const price = toLouisVuittonPrice(`${product.sku}-${product.reference}`);
-    const watchSlug = slugify(`louis-vuitton-${product.series}-${product.reference}`);
-
-    await prisma.watch.create({
-      data: {
-        slug: watchSlug,
-        brandId: brand.id,
-        seriesId: series.id,
-        model: product.name,
-        reference: product.reference,
-        description: `${product.description} Listed at ${price.toFixed(2)} USD.`,
-        conditionReport: "Brand new. Authentic Louis Vuitton. Box and papers included.",
-        price,
-        condition: "UNWORN",
-        year: product.year,
-        movement: product.movement,
-        caseMaterial: product.caseMaterial,
-        caseSize: product.caseSize,
-        strapMaterial: product.strapMaterial,
-        dial: product.dial,
-        waterResistance: product.waterResistance,
-        gender: product.gender,
-        hasBox: true,
-        hasPapers: true,
-        featured: true,
-        category: product.category,
-        images: {
-          create: imagePaths.map((url, index) => ({
-            url,
-            alt: `${product.name} - image ${index + 1}`,
-            isPrimary: index === 0,
-            sortOrder: index,
-          })),
-        },
-      },
-    });
-
-    imported += 1;
-  }
-
-  console.log(`Imported ${imported} Louis Vuitton watches from The Watch Pages.`);
-}
-
 async function main() {
   console.log("Seeding database...");
 
@@ -705,7 +619,6 @@ async function main() {
 
   await seedHublotFromLuxurytime();
   await seedCartierFromWatchesOfSwitzerland();
-  await seedLouisVuittonFromTheWatchPages();
   await removeNonImportedWatches();
 
   console.log("Seeding complete!");

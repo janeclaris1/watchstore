@@ -2,6 +2,14 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { stripe } from "@/lib/stripe";
 
+function toAbsoluteImageUrl(url: string | undefined | null): string | null {
+  if (!url) return null;
+  if (url.startsWith("http://") || url.startsWith("https://")) return url;
+  const base = process.env.NEXTAUTH_URL?.replace(/\/$/, "");
+  if (!base || base.includes("localhost")) return null;
+  return `${base}${url.startsWith("/") ? url : `/${url}`}`;
+}
+
 export async function POST(req: Request) {
   try {
     const body = await req.json();
@@ -9,6 +17,19 @@ export async function POST(req: Request) {
 
     if (!items?.length || !email) {
       return NextResponse.json({ error: "Invalid request" }, { status: 400 });
+    }
+
+    if (!process.env.STRIPE_SECRET_KEY?.startsWith("sk_")) {
+      console.error(
+        "Checkout error: STRIPE_SECRET_KEY must be a secret key starting with sk_test_ or sk_live_"
+      );
+      return NextResponse.json(
+        {
+          error:
+            "Stripe is misconfigured. Set STRIPE_SECRET_KEY to your secret key (sk_...).",
+        },
+        { status: 503 }
+      );
     }
 
     const total = items.reduce(
@@ -49,12 +70,13 @@ export async function POST(req: Request) {
           where: { id: item.watchId },
           include: { brand: true, images: true },
         });
+        const imageUrl = toAbsoluteImageUrl(watch?.images[0]?.url);
         return {
           price_data: {
             currency: "usd",
             product_data: {
               name: watch ? `${watch.brand.name} ${watch.model}` : "Watch",
-              images: watch?.images[0]?.url ? [watch.images[0].url] : [],
+              ...(imageUrl ? { images: [imageUrl] } : {}),
             },
             unit_amount: Math.round(item.price * 100),
           },
@@ -63,12 +85,14 @@ export async function POST(req: Request) {
       })
     );
 
+    const baseUrl = process.env.NEXTAUTH_URL?.replace(/\/$/, "") || "http://localhost:3000";
+
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
       line_items: lineItems,
       mode: "payment",
-      success_url: `${process.env.NEXTAUTH_URL}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${process.env.NEXTAUTH_URL}/cart`,
+      success_url: `${baseUrl}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${baseUrl}/cart`,
       customer_email: email,
       metadata: { orderId: order.id },
     });
@@ -81,6 +105,8 @@ export async function POST(req: Request) {
     return NextResponse.json({ url: session.url });
   } catch (error) {
     console.error("Checkout error:", error);
-    return NextResponse.json({ error: "Checkout failed" }, { status: 500 });
+    const message =
+      error instanceof Error ? error.message : "Checkout failed. Please try again.";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

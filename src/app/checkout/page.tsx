@@ -60,7 +60,7 @@ export default function CheckoutPage() {
       if (data.url) {
         window.location.href = data.url;
       } else {
-        alert("Checkout failed. Please try again.");
+        alert(data.error || "Checkout failed. Please try again.");
       }
     } catch {
       alert("Checkout failed. Please try again.");
