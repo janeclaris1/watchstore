@@ -24,12 +24,12 @@ import { toDaytonaPrice, toStorefrontPrice } from "../src/lib/utils";
 const prisma = new PrismaClient();
 
 const brands = [
-  { name: "Rolex", slug: "rolex", logo: "https://placehold.co/120x40/1A1A1A/FFFFFF?text=ROLEX" },
-  { name: "Patex Philippe", slug: "patek-philippe", logo: "https://placehold.co/120x40/1A1A1A/FFFFFF?text=PATEX" },
-  { name: "Omega", slug: "omega", logo: "https://placehold.co/120x40/1A1A1A/FFFFFF?text=OMEGA" },
-  { name: "Hublot", slug: "hublot", logo: "https://placehold.co/120x40/1A1A1A/FFFFFF?text=HUBLOT" },
-  { name: "Cartier", slug: "cartier", logo: "https://placehold.co/120x40/1A1A1A/FFFFFF?text=CARTIER" },
-  { name: "Louis Vuitton", slug: "louis-vuitton", logo: "https://placehold.co/120x40/1A1A1A/FFFFFF?text=LV" },
+  { name: "Rolex", slug: "rolex", logo: "/images/brands/rolex.svg" },
+  { name: "Patex Philippe", slug: "patek-philippe", logo: "/images/brands/patek-philippe.svg" },
+  { name: "Omega", slug: "omega", logo: "/images/brands/omega.svg" },
+  { name: "Hublot", slug: "hublot", logo: "/images/brands/hublot.svg" },
+  { name: "Cartier", slug: "cartier", logo: "/images/brands/cartier.svg" },
+  { name: "Louis Vuitton", slug: "louis-vuitton", logo: "/images/brands/louis-vuitton.svg" },
 ];
 
 const WATCHFINDER_BRANDS = ["rolex", "omega"];

@@ -1,31 +1,62 @@
-import Image from "next/image";
 import Link from "next/link";
 
 const BRANDS = [
-  { name: "Rolex", slug: "rolex", logo: "https://placehold.co/120x40/666666/FFFFFF?text=ROLEX" },
-  { name: "Patex Philippe", slug: "patek-philippe", logo: "https://placehold.co/120x40/666666/FFFFFF?text=PATEX" },
-  { name: "Omega", slug: "omega", logo: "https://placehold.co/120x40/666666/FFFFFF?text=OMEGA" },
-  { name: "Hublot", slug: "hublot", logo: "https://placehold.co/120x40/666666/FFFFFF?text=HUBLOT" },
-  { name: "Cartier", slug: "cartier", logo: "https://placehold.co/120x40/666666/FFFFFF?text=CARTIER" },
-  { name: "Louis Vuitton", slug: "louis-vuitton", logo: "https://placehold.co/120x40/666666/FFFFFF?text=LV" },
+  {
+    name: "Rolex",
+    slug: "rolex",
+    logo: "/images/brands/rolex.svg",
+    width: 120,
+  },
+  {
+    name: "Patex Philippe",
+    slug: "patek-philippe",
+    logo: "/images/brands/patek-philippe.svg",
+    width: 140,
+  },
+  {
+    name: "Omega",
+    slug: "omega",
+    logo: "/images/brands/omega.svg",
+    width: 120,
+  },
+  {
+    name: "Hublot",
+    slug: "hublot",
+    logo: "/images/brands/hublot.svg",
+    width: 120,
+  },
+  {
+    name: "Cartier",
+    slug: "cartier",
+    logo: "/images/brands/cartier.svg",
+    width: 130,
+  },
+  {
+    name: "Louis Vuitton",
+    slug: "louis-vuitton",
+    logo: "/images/brands/louis-vuitton.svg",
+    width: 140,
+  },
 ];
 
 export function BrandStrip() {
   return (
-    <section className="py-10 border-b border-wf-border overflow-hidden">
-      <div className="flex gap-12 animate-scroll overflow-x-auto scrollbar-hide px-4 justify-center">
+    <section className="py-10 border-b border-wf-border overflow-hidden bg-white">
+      <div className="flex gap-10 md:gap-14 animate-scroll overflow-x-auto scrollbar-hide px-4 justify-center items-center">
         {BRANDS.map((brand) => (
           <Link
             key={brand.slug}
             href={`/watches/${brand.slug}`}
-            className="shrink-0 grayscale hover:grayscale-0 transition-all duration-300 opacity-60 hover:opacity-100"
+            className="shrink-0 opacity-50 hover:opacity-100 transition-opacity duration-300"
+            aria-label={brand.name}
           >
-            <Image
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
               src={brand.logo}
               alt={brand.name}
-              width={120}
+              width={brand.width}
               height={40}
-              className="h-8 w-auto object-contain"
+              className="h-9 w-auto object-contain"
             />
           </Link>
         ))}
