@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 
 export default function ContactPage() {
   return (
-    <div>
+    <div className="font-cantora">
       <section className="relative overflow-hidden border-b border-wf-border bg-gradient-to-br from-wf-light via-white to-[#f3eee4]">
         <div
           className="pointer-events-none absolute inset-0 opacity-[0.35]"
@@ -26,7 +26,7 @@ export default function ContactPage() {
           <p className="text-xs uppercase tracking-[0.25em] text-gold mb-4 animate-fade-up">
             COSY AURA WATCH STORE
           </p>
-          <h1 className="font-playfair text-4xl md:text-6xl text-wf-black mb-5 max-w-3xl animate-fade-up [animation-delay:80ms]">
+          <h1 className="text-4xl md:text-6xl text-wf-black mb-5 max-w-3xl animate-fade-up [animation-delay:80ms]">
             Contact
           </h1>
           <p className="text-wf-gray text-base md:text-lg leading-relaxed max-w-xl animate-fade-up [animation-delay:160ms]">
@@ -44,10 +44,10 @@ export default function ContactPage() {
                 Email
               </p>
               <a
-                href="mailto:support@cosyaurawatchstore.com"
-                className="font-playfair text-2xl text-wf-black hover:text-gold transition-colors break-all"
+                href="mailto:support@cosyaura.us"
+                className="text-2xl text-wf-black hover:text-gold transition-colors break-all"
               >
-                support@cosyaurawatchstore.com
+                support@cosyaura.us
               </a>
             </div>
 
@@ -77,7 +77,7 @@ export default function ContactPage() {
           </aside>
 
           <div className="lg:col-span-8 lg:border-l lg:border-wf-border lg:pl-16">
-            <h2 className="font-playfair text-3xl text-wf-black mb-2 animate-fade-up">
+            <h2 className="text-3xl text-wf-black mb-2 animate-fade-up">
               Send a message
             </h2>
             <p className="text-sm text-wf-gray mb-10 animate-fade-up [animation-delay:80ms]">

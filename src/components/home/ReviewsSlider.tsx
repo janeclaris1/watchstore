@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { ChevronLeft, ChevronRight, Heart, Star } from "lucide-react";
+import { ChevronLeft, ChevronRight, Star } from "lucide-react";
 import { BrandLogo } from "@/components/layout/BrandLogo";
 
 const SUMMARY = {
@@ -36,7 +36,6 @@ const REVIEWS = [
     rating: 5,
     text: "Bought a Rolex Submariner for my anniversary. Packaging was flawless and the watch arrived exactly as described - brand new with box and papers.",
     product: "Rolex Submariner",
-    recommend: true,
     meta: "New York, US · 1 week ago",
   },
   {
@@ -44,7 +43,6 @@ const REVIEWS = [
     rating: 5,
     text: "Smooth checkout and clear shipping updates. My Omega Seamaster looked stunning out of the box. Will definitely shop here again.",
     product: "Omega Seamaster",
-    recommend: true,
     meta: "London, UK · 2 weeks ago",
   },
   {
@@ -52,7 +50,6 @@ const REVIEWS = [
     rating: 5,
     text: "Customer support answered all my questions before purchase. Delivery was quick after payment confirmation and the Breitling Navitimer is perfect.",
     product: "Breitling Navitimer",
-    recommend: true,
     meta: "Toronto, CA · 3 weeks ago",
   },
   {
@@ -60,7 +57,6 @@ const REVIEWS = [
     rating: 4,
     text: "Beautiful Cartier Tank. Took a little longer through customs, but tracking was transparent the whole way. Very happy with the final piece.",
     product: "Cartier Tank",
-    recommend: true,
     meta: "Paris, FR · 1 month ago",
   },
   {
@@ -68,7 +64,6 @@ const REVIEWS = [
     rating: 5,
     text: "Authentic TAG Heuer Carrera, papers included, and the condition was spotless. COSY AURA made buying a luxury watch feel simple and secure.",
     product: "TAG Heuer Carrera",
-    recommend: true,
     meta: "Houston, US · 1 month ago",
   },
   {
@@ -76,7 +71,6 @@ const REVIEWS = [
     rating: 5,
     text: "Ordered a Tudor Black Bay as a gift. Presentation was elegant and it arrived right on time. Highly recommend this store.",
     product: "Tudor Black Bay",
-    recommend: true,
     meta: "Sydney, AU · 5 weeks ago",
   },
   {
@@ -84,7 +78,6 @@ const REVIEWS = [
     rating: 5,
     text: "Great selection of Panerai and IWC. Prices were competitive and the return policy gave me confidence to buy online.",
     product: "IWC Portugieser",
-    recommend: false,
     meta: "Berlin, DE · 2 months ago",
   },
   {
@@ -92,7 +85,6 @@ const REVIEWS = [
     rating: 5,
     text: "My Grand Seiko looks even better in person. Communication by email was prompt and professional from order to delivery.",
     product: "Grand Seiko Heritage",
-    recommend: true,
     meta: "Tokyo, JP · 2 months ago",
   },
 ];
@@ -224,13 +216,6 @@ export function ReviewsSlider() {
                       <span className="italic text-wf-gray">{review.product}. </span>
                       {review.text}
                     </p>
-
-                    {review.recommend && (
-                      <p className="flex items-center gap-1.5 text-xs text-wf-gray mt-3">
-                        <Heart className="w-3.5 h-3.5 text-wf-black fill-wf-black" />
-                        I recommend this product
-                      </p>
-                    )}
 
                     <p className="text-[11px] text-wf-gray/80 mt-4 text-right">{review.meta}</p>
                   </article>

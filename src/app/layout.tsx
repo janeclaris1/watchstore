@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Playfair_Display, Inter } from "next/font/google";
+import { Playfair_Display, Inter, Cantora_One } from "next/font/google";
 import { headers } from "next/headers";
 import "./globals.css";
 import { Header } from "@/components/layout/Header";
@@ -18,6 +18,13 @@ const playfair = Playfair_Display({
 const inter = Inter({
   subsets: ["latin"],
   variable: "--font-inter",
+  display: "swap",
+});
+
+const cantora = Cantora_One({
+  weight: "400",
+  subsets: ["latin"],
+  variable: "--font-cantora",
   display: "swap",
 });
 
@@ -43,7 +50,7 @@ export default async function RootLayout({
   const isMaintenance = pathname.startsWith("/maintenance");
 
   return (
-    <html lang="en" className={`${playfair.variable} ${inter.variable}`}>
+    <html lang="en" className={`${playfair.variable} ${inter.variable} ${cantora.variable}`}>
       <head>
         <meta name="algolia-site-verification" content="163E676A1222ACC2" />
       </head>

@@ -23,6 +23,7 @@ const config: Config = {
       fontFamily: {
         playfair: ["var(--font-playfair)", "serif"],
         inter: ["var(--font-inter)", "system-ui", "sans-serif"],
+        cantora: ["var(--font-cantora)", "sans-serif"],
       },
       animation: {
         "fade-up": "fadeUp 0.6s ease-out forwards",
