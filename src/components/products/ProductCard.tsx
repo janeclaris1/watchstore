@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Heart } from "lucide-react";
 import { useWishlistStore } from "@/lib/store";
 import { formatPrice, conditionLabel, cn } from "@/lib/utils";
+import { VerifiedBadge } from "@/components/ui/VerifiedBadge";
 
 interface ProductCardProps {
   watch: {
@@ -92,11 +93,11 @@ export function ProductCard({ watch, currency = "USD" }: ProductCardProps) {
         {watch.reference && (
           <p className="text-xs text-wf-gray mb-2">{watch.reference}</p>
         )}
-        <div className="flex items-center gap-2 text-xs mb-1">
+        <div className="flex items-center gap-1.5 text-xs mb-1 text-wf-black">
           <span className="font-medium">Box</span>
-          <span>✓</span>
-          <span className="font-medium">Papers</span>
-          <span>✓</span>
+          <VerifiedBadge className="w-3.5 h-3.5 text-wf-black shrink-0" />
+          <span className="font-medium ml-1">Papers</span>
+          <VerifiedBadge className="w-3.5 h-3.5 text-wf-black shrink-0" />
         </div>
         {watch.year && (
           <p className="text-xs text-wf-gray mb-1">Year {watch.year}</p>

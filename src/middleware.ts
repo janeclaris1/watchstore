@@ -20,6 +20,11 @@ export async function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
+  // When maintenance is off, don't leave visitors stuck on /maintenance
+  if (!isMaintenanceEnabled() && pathname.startsWith("/maintenance")) {
+    return NextResponse.redirect(new URL("/", req.url));
+  }
+
   // Maintenance mode: redirect storefront to /maintenance
   // Keep admin + auth APIs available so you can still manage the site.
   if (isMaintenanceEnabled()) {

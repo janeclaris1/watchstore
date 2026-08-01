@@ -12,6 +12,7 @@ import {
   strapMaterialLabel,
   cn,
 } from "@/lib/utils";
+import { VerifiedBadge } from "@/components/ui/VerifiedBadge";
 
 interface ProductGalleryProps {
   images: { url: string; alt: string | null }[];
@@ -153,8 +154,12 @@ export function ProductInfo({ watch }: ProductInfoProps) {
 
       <div className="flex gap-4 mb-6 text-sm">
         <span className="px-3 py-1 bg-wf-light rounded">{conditionLabel(watch.condition)}</span>
-        <span className="px-3 py-1 bg-wf-light rounded">Box</span>
-        <span className="px-3 py-1 bg-wf-light rounded">Papers</span>
+        <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-wf-light rounded">
+          Box <VerifiedBadge className="w-3.5 h-3.5 text-wf-black" />
+        </span>
+        <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-wf-light rounded">
+          Papers <VerifiedBadge className="w-3.5 h-3.5 text-wf-black" />
+        </span>
       </div>
 
       <table className="w-full text-sm mb-8">
