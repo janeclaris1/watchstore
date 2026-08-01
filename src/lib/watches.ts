@@ -25,6 +25,35 @@ export interface WatchListFilters {
   limit?: number;
   gender?: string;
   category?: string;
+  hasBox?: boolean;
+  hasPapers?: boolean;
+}
+
+const MIN_CASE_SIZE_MM = 20;
+const MAX_CASE_SIZE_MM = 50;
+const MIN_VALID_YEAR = 1950;
+const MAX_VALID_YEAR = new Date().getFullYear() + 1;
+
+export function parseCaseSizeMm(size: string | null | undefined): number | null {
+  if (!size) return null;
+  const match = size.match(/(\d+(?:\.\d+)?)/);
+  if (!match) return null;
+  const value = Number(match[1]);
+  return Number.isFinite(value) ? value : null;
+}
+
+export function isRealisticCaseSize(size: string): boolean {
+  const mm = parseCaseSizeMm(size);
+  return mm !== null && mm >= MIN_CASE_SIZE_MM && mm <= MAX_CASE_SIZE_MM;
+}
+
+export function isRealisticYear(year: number | null | undefined): boolean {
+  return (
+    typeof year === "number" &&
+    Number.isFinite(year) &&
+    year >= MIN_VALID_YEAR &&
+    year <= MAX_VALID_YEAR
+  );
 }
 
 export function parseWatchListFilters(
@@ -55,6 +84,9 @@ export function parseWatchListFilters(
     limit: overrides.limit ?? (get("limit") ? Number(get("limit")) : WATCH_PAGE_SIZE),
     gender: get("gender"),
     category: get("category"),
+    hasBox: get("hasBox") === "true" ? true : get("hasBox") === "false" ? false : undefined,
+    hasPapers:
+      get("hasPapers") === "true" ? true : get("hasPapers") === "false" ? false : undefined,
   };
 }
 
@@ -89,10 +121,16 @@ export async function getWatches(filters: WatchListFilters = {}) {
     if (filters.strapMaterials?.length) where.strapMaterial = { in: filters.strapMaterials };
     if (filters.gender) where.gender = filters.gender;
     if (filters.category) where.category = filters.category;
+    if (filters.hasBox !== undefined) where.hasBox = filters.hasBox;
+    if (filters.hasPapers !== undefined) where.hasPapers = filters.hasPapers;
     if (filters.minYear || filters.maxYear) {
-      where.year = {};
-      if (filters.minYear) (where.year as Record<string, number>).gte = filters.minYear;
-      if (filters.maxYear) (where.year as Record<string, number>).lte = filters.maxYear;
+      const yearFilter: Record<string, number> = {
+        gte: MIN_VALID_YEAR,
+        lte: MAX_VALID_YEAR,
+      };
+      if (filters.minYear) yearFilter.gte = Math.max(filters.minYear, MIN_VALID_YEAR);
+      if (filters.maxYear) yearFilter.lte = Math.min(filters.maxYear, MAX_VALID_YEAR);
+      where.year = yearFilter;
     }
 
     let orderBy: Record<string, string> = { createdAt: "desc" };
@@ -248,8 +286,8 @@ export async function getFilterOptions(brandSlug?: string) {
       caseSizes: caseSizes
         .map((row) => row.caseSize)
         .filter((size): size is string => Boolean(size))
-        .filter((size) => /\d/.test(size) && !/^[0-9]mm$/.test(size))
-        .sort((a, b) => parseFloat(a) - parseFloat(b)),
+        .filter(isRealisticCaseSize)
+        .sort((a, b) => (parseCaseSizeMm(a) || 0) - (parseCaseSizeMm(b) || 0)),
     };
   } catch {
     return { brands: [], series: [], caseSizes: [] as string[] };

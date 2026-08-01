@@ -22,9 +22,10 @@ interface ProductToolbarProps {
 }
 
 const PRICE_PRESETS = [
-  { label: "Under $400", min: null, max: "400" },
-  { label: "$400 – $500", min: "400", max: "500" },
-  { label: "All under $500", min: null, max: "500" },
+  { label: "Under $500", min: null, max: "500" },
+  { label: "$500 – $999", min: "500", max: "999" },
+  { label: "$1,000 – $1,299", min: "1000", max: "1299" },
+  { label: "$1,300+", min: "1300", max: null },
 ];
 
 const YEAR_PRESETS = [
@@ -32,6 +33,12 @@ const YEAR_PRESETS = [
   { label: "2020 – 2023", min: "2020", max: "2023" },
   { label: "2015 – 2019", min: "2015", max: "2019" },
   { label: "Before 2015", min: null, max: "2014" },
+];
+
+const CONDITIONS = [
+  { value: "UNWORN", label: "New" },
+  { value: "EXCELLENT", label: "Excellent" },
+  { value: "GOOD", label: "Good" },
 ];
 
 const MOVEMENTS = [
@@ -143,9 +150,15 @@ export function ProductToolbar({
   const activeCaseSize = searchParams.get("caseSize") || "";
   const hasPrice = Boolean(searchParams.get("minPrice") || searchParams.get("maxPrice"));
   const hasYear = Boolean(searchParams.get("minYear") || searchParams.get("maxYear"));
-  const moreCount = ["condition", "movement", "caseMaterial", "strapMaterial", "gender"]
-    .filter((key) => searchParams.get(key))
-    .length;
+  const moreCount = [
+    "condition",
+    "movement",
+    "caseMaterial",
+    "strapMaterial",
+    "gender",
+    "hasBox",
+    "hasPapers",
+  ].filter((key) => searchParams.get(key)).length;
 
   const filteredSeries = brandSlug
     ? series
@@ -261,7 +274,17 @@ export function ProductToolbar({
                               : `${item.name} (${item.brand.name})`
                           }
                           active={activeSeries === item.slug}
-                          onClick={() => setParam("series", item.slug)}
+                          onClick={() => {
+                            if (brandSlug || activeBrand) {
+                              setParam("series", item.slug);
+                              return;
+                            }
+                            // Scope to the series brand so slug collisions stay accurate
+                            router.push(
+                              `/watches/${item.brand.slug}?series=${encodeURIComponent(item.slug)}`
+                            );
+                            setOpen(null);
+                          }}
                         />
                       ))}
                     </>
@@ -274,6 +297,9 @@ export function ProductToolbar({
                         active={!activeCaseSize}
                         onClick={() => setParam("caseSize", null)}
                       />
+                      {caseSizes.length === 0 && (
+                        <p className="px-3 py-2 text-sm text-wf-gray">No sizes available</p>
+                      )}
                       {caseSizes.map((size) => (
                         <DropdownItem
                           key={size}
@@ -415,13 +441,43 @@ export function ProductToolbar({
 
             <div className="p-4 space-y-6">
               <MoreFilterGroup title="Condition">
+                {CONDITIONS.map((item) => (
+                  <label key={item.value} className="flex items-center gap-2 text-sm">
+                    <input
+                      type="checkbox"
+                      checked={(searchParams.get("condition") || "")
+                        .split(",")
+                        .includes(item.value)}
+                      onChange={() => toggleArray("condition", item.value)}
+                    />
+                    {item.label}
+                  </label>
+                ))}
+              </MoreFilterGroup>
+
+              <MoreFilterGroup title="Completeness">
                 <label className="flex items-center gap-2 text-sm">
                   <input
                     type="checkbox"
-                    checked={(searchParams.get("condition") || "").includes("UNWORN")}
-                    onChange={() => toggleArray("condition", "UNWORN")}
+                    checked={searchParams.get("hasBox") === "true"}
+                    onChange={() =>
+                      setParam("hasBox", searchParams.get("hasBox") === "true" ? null : "true")
+                    }
                   />
-                  New
+                  With box
+                </label>
+                <label className="flex items-center gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={searchParams.get("hasPapers") === "true"}
+                    onChange={() =>
+                      setParam(
+                        "hasPapers",
+                        searchParams.get("hasPapers") === "true" ? null : "true"
+                      )
+                    }
+                  />
+                  With papers
                 </label>
               </MoreFilterGroup>
 
@@ -502,9 +558,15 @@ export function ProductToolbar({
                 className="btn-outline flex-1"
                 onClick={() => {
                   pushParams((params) => {
-                    ["condition", "movement", "caseMaterial", "strapMaterial", "gender"].forEach(
-                      (key) => params.delete(key)
-                    );
+                    [
+                      "condition",
+                      "movement",
+                      "caseMaterial",
+                      "strapMaterial",
+                      "gender",
+                      "hasBox",
+                      "hasPapers",
+                    ].forEach((key) => params.delete(key));
                   });
                 }}
               >

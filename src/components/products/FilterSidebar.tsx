@@ -216,12 +216,19 @@ export function ActiveFilters({ brandSlug }: { brandSlug?: string }) {
     caseSize: "Case Size",
     brand: "Brand",
     brandSlug: "Brand",
+    hasBox: "Box",
+    hasPapers: "Papers",
   };
 
   searchParams.forEach((value, key) => {
-    if (key !== "sort" && key !== "page" && key !== "view") {
-      filters.push({ key, label: filterLabels[key] || key, value });
-    }
+    if (key === "sort" || key === "page" || key === "view" || key === "limit") return;
+    const display =
+      key === "hasBox" || key === "hasPapers"
+        ? value === "true"
+          ? "Yes"
+          : "No"
+        : value;
+    filters.push({ key, label: filterLabels[key] || key, value: display });
   });
 
   if (filters.length === 0) return null;
@@ -229,8 +236,14 @@ export function ActiveFilters({ brandSlug }: { brandSlug?: string }) {
   function removeFilter(key: string) {
     const params = new URLSearchParams(searchParams.toString());
     params.delete(key);
+    if (key === "minPrice") params.delete("maxPrice");
+    if (key === "maxPrice") params.delete("minPrice");
+    if (key === "minYear") params.delete("maxYear");
+    if (key === "maxYear") params.delete("minYear");
+    params.delete("page");
     const base = brandSlug ? `/watches/${brandSlug}` : "/watches";
-    router.push(`${base}?${params.toString()}`);
+    const qs = params.toString();
+    router.push(qs ? `${base}?${qs}` : base);
   }
 
   return (
