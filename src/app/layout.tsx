@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Playfair_Display, Inter } from "next/font/google";
+import { headers } from "next/headers";
 import "./globals.css";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
@@ -33,11 +34,14 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const pathname = (await headers()).get("x-pathname") || "";
+  const isMaintenance = pathname.startsWith("/maintenance");
+
   return (
     <html lang="en" className={`${playfair.variable} ${inter.variable}`}>
       <head>
@@ -45,12 +49,18 @@ export default function RootLayout({
       </head>
       <body>
         <Providers>
-          <Header />
-          <main className="min-h-screen">{children}</main>
-          <Footer />
-          <CartDrawer />
-          <NewsletterPopup />
-          <CookieConsent />
+          {isMaintenance ? (
+            children
+          ) : (
+            <>
+              <Header />
+              <main className="min-h-screen">{children}</main>
+              <Footer />
+              <CartDrawer />
+              <NewsletterPopup />
+              <CookieConsent />
+            </>
+          )}
         </Providers>
       </body>
     </html>
