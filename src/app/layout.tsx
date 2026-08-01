@@ -36,6 +36,13 @@ export const metadata: Metadata = {
   description:
     "Discover brand-new luxury watches. Secure payment with dispatch and delivery after payment confirmation.",
   keywords: ["luxury watches", "new watches", "Rolex", "Omega", "Patek Philippe", "Cartier"],
+  icons: {
+    icon: [
+      { url: "/favicon.svg", type: "image/svg+xml" },
+      { url: "/favicon-32.png", sizes: "32x32", type: "image/png" },
+    ],
+    apple: [{ url: "/apple-icon.png", sizes: "180x180", type: "image/png" }],
+  },
   other: {
     "algolia-site-verification": "163E676A1222ACC2",
   },
