@@ -35,4 +35,48 @@
   .fade-in-scroll.visible {
     @apply opacity-100 translate-y-0;
   }
+
+  .brand-marquee {
+    display: flex;
+    width: max-content;
+    align-items: center;
+    gap: 2.5rem;
+    animation: brand-marquee 35s linear infinite;
+  }
+
+  .brand-marquee:hover {
+    animation-play-state: paused;
+  }
+
+  @media (min-width: 768px) {
+    .brand-marquee {
+      gap: 4rem;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .brand-marquee {
+      animation: none;
+    }
+  }
+}
+
+@layer utilities {
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@keyframes brand-marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
 }

@@ -116,14 +116,14 @@ export async function notifyOrderPaid(orderId: string) {
   await createAdminNotification({
     type: "ORDER_PAID",
     title: `New paid order #${shortId}`,
-    message: `${order.email} — ${formatPrice(order.total)} · ${order.items.length} item(s)`,
+    message: `${order.email} - ${formatPrice(order.total)} · ${order.items.length} item(s)`,
     link: `/admin/orders/${order.id}`,
     orderId: order.id,
   });
 
   await sendEmail({
     to: ADMIN_EMAIL,
-    subject: `New order #${shortId} — ${formatPrice(order.total)}`,
+    subject: `New order #${shortId} - ${formatPrice(order.total)}`,
     html: emailShell(
       `New paid order #${shortId}`,
       `<p>Customer: <strong>${order.email}</strong></p>
@@ -135,7 +135,7 @@ export async function notifyOrderPaid(orderId: string) {
 
   await sendEmail({
     to: order.email,
-    subject: `Order confirmed #${shortId} — COSY AURA WATCH STORE`,
+    subject: `Order confirmed #${shortId} - COSY AURA WATCH STORE`,
     html: emailShell(
       "Thank you for your order",
       `<p>We've received your payment and are preparing your watch for dispatch.</p>
@@ -167,7 +167,7 @@ export async function notifyOrderStatusChange(
     },
     SHIPPED: {
       subject: `Order #${shortId} has shipped`,
-      body: `<p>Great news — your watch is on its way. Track updates will follow if provided by the carrier.</p>`,
+      body: `<p>Great news - your watch is on its way. Track updates will follow if provided by the carrier.</p>`,
     },
     DELIVERED: {
       subject: `Order #${shortId} delivered`,

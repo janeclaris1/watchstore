@@ -8,7 +8,7 @@ import {
 export const metadata: Metadata = {
   title: "Careers",
   description:
-    "Join the COSY AURA WATCH STORE team — roles in ecommerce, customer care, and operations.",
+    "Join the COSY AURA WATCH STORE team - roles in ecommerce, customer care, and operations.",
 };
 
 const ROLES = [
@@ -36,7 +36,7 @@ export default function CareersPage() {
   return (
     <ContentPage
       title="Careers"
-      subtitle="Help us build a refined destination for new luxury watches — from client care to operations."
+      subtitle="Help us build a refined destination for new luxury watches - from client care to operations."
     >
       <ContentSection title="Why work with us">
         <p>

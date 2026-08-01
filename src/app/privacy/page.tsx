@@ -47,7 +47,7 @@ export default function PrivacyPage() {
         <p>
           We use personal information to process orders, deliver watches after payment
           confirmation, respond to enquiries, improve the storefront, prevent fraud, and
-          — where you allow it — measure performance and show relevant offers.
+          - where you allow it - measure performance and show relevant offers.
         </p>
       </ContentSection>
 

@@ -151,6 +151,38 @@ export async function getLatestWatches(limit = 12) {
   }
 }
 
+function shuffleWatches<T>(items: T[]): T[] {
+  const arr = [...items];
+  for (let i = arr.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+/** Random watch sample for homepage sections. */
+export async function getRandomWatches(
+  limit = 6,
+  options: { excludeIds?: string[]; featuredOnly?: boolean } = {}
+) {
+  try {
+    const poolSize = Math.max(limit * 8, 48);
+    const watches = await prisma.watch.findMany({
+      where: {
+        ...(options.featuredOnly ? { featured: true } : {}),
+        ...(options.excludeIds?.length
+          ? { id: { notIn: options.excludeIds } }
+          : {}),
+      },
+      include: { brand: true, images: { orderBy: { sortOrder: "asc" } } },
+      take: poolSize,
+    });
+    return shuffleWatches(watches).slice(0, limit);
+  } catch {
+    return [];
+  }
+}
+
 export async function getWatchBySlug(slug: string) {
   try {
     return await prisma.watch.findUnique({
@@ -236,7 +268,7 @@ export async function getBrandBySlug(slug: string) {
 export async function getRelatedWatches(
   watchId: string,
   brandId: string,
-  limit = 4
+  limit = 18
 ) {
   return prisma.watch.findMany({
     where: { brandId, NOT: { id: watchId } },

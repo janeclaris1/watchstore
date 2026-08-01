@@ -2,8 +2,15 @@ import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 const WATCHFINDER_BASE_URL = "https://www.watchfinder.com";
+const WATCHFINDER_UK_BASE_URL = "https://www.watchfinder.co.uk";
 const USER_AGENT =
   "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
+
+export type WatchfinderLocale = "com" | "uk";
+
+function baseUrlForLocale(locale: WatchfinderLocale = "com"): string {
+  return locale === "uk" ? WATCHFINDER_UK_BASE_URL : WATCHFINDER_BASE_URL;
+}
 
 export interface WatchfinderOffer {
   sku: string;
@@ -50,13 +57,13 @@ function toHighResImageUrl(imageUrl: string): string {
   return url.toString();
 }
 
-function parseProductCard(chunk: string): WatchfinderOffer | null {
+function parseProductCard(chunk: string, baseUrl: string): WatchfinderOffer | null {
   const reference = matchValue(chunk, /data-product-model="([^"]+)"/);
   const encodedImage = matchValue(chunk, /data-product-image="([^"]+)"/);
   const series = matchValue(chunk, /data-product-series="([^"]+)"/);
   const sku = matchValue(chunk, /data-product-sku="([^"]+)"/);
   const brand = matchValue(chunk, /data-product-brand="([^"]+)"/);
-  const href = matchValue(chunk, /href="([^"]+)"/);
+  const href = matchValue(chunk, /href="(\/[^"]+)"/);
   const year = matchNumber(
     chunk,
     /product-card__specs__year-location__item__value">\s*(\d{4})\s*</
@@ -92,20 +99,34 @@ function parseProductCard(chunk: string): WatchfinderOffer | null {
     stockType: decodeHtmlEntities(stockType.trim()),
     hasBox,
     hasPapers,
-    url: href?.startsWith("http") ? href : `${WATCHFINDER_BASE_URL}${href ?? ""}`,
+    url: href?.startsWith("http") ? href : `${baseUrl}${href ?? ""}`,
   };
 }
 
-export function parseWatchfinderOffers(html: string): WatchfinderOffer[] {
+export function parseWatchfinderOffers(
+  html: string,
+  locale: WatchfinderLocale = "com"
+): WatchfinderOffer[] {
+  const baseUrl = baseUrlForLocale(locale);
   const chunks = html.split('class="product-card"').slice(1);
   return chunks
-    .map((chunk) => parseProductCard(chunk))
+    .map((chunk) => parseProductCard(chunk, baseUrl))
     .filter((offer): offer is WatchfinderOffer => offer !== null);
 }
 
-export async function fetchWatchfinderOffers(brandSlug = "rolex"): Promise<WatchfinderOffer[]> {
-  const brandName = brandSlug.charAt(0).toUpperCase() + brandSlug.slice(1);
-  const url = `${WATCHFINDER_BASE_URL}/special-offers?filter-brand=${encodeURIComponent(brandName)}`;
+export async function fetchWatchfinderOffers(
+  brandSlug = "rolex",
+  options: { locale?: WatchfinderLocale; brandName?: string } = {}
+): Promise<WatchfinderOffer[]> {
+  const locale = options.locale ?? "com";
+  const baseUrl = baseUrlForLocale(locale);
+  const brandName =
+    options.brandName ??
+    brandSlug
+      .split("-")
+      .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+      .join(" ");
+  const url = `${baseUrl}/special-offers?filter-brand=${encodeURIComponent(brandName)}`;
 
   const response = await fetch(url, {
     headers: {
@@ -119,7 +140,7 @@ export async function fetchWatchfinderOffers(brandSlug = "rolex"): Promise<Watch
   }
 
   const html = await response.text();
-  return parseWatchfinderOffers(html);
+  return parseWatchfinderOffers(html, locale);
 }
 
 export function getLocalWatchImagePath(brandSlug: string, sku: string): string {

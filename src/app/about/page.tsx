@@ -9,17 +9,17 @@ import {
 export const metadata: Metadata = {
   title: "About Us",
   description:
-    "COSY AURA WATCH STORE — a curated destination for brand-new luxury watches with secure payment and delivery after confirmation.",
+    "COSY AURA WATCH STORE - a curated destination for brand-new luxury watches with secure payment and delivery after confirmation.",
 };
 
 const VALUES = [
   {
     title: "New only",
-    body: "We focus exclusively on brand-new luxury watches — never pre-owned.",
+    body: "We focus exclusively on brand-new luxury watches - never pre-owned.",
   },
   {
     title: "Curated selection",
-    body: "Rolex, Patex Philippe, Omega, Hublot, Cartier, Louis Vuitton, and more — chosen for quality and desirability.",
+    body: "Rolex, Patex Philippe, Omega, Hublot, Cartier, Louis Vuitton, and more - chosen for quality and desirability.",
   },
   {
     title: "Clear process",
@@ -37,7 +37,7 @@ export default function AboutPage() {
         <p>
           We set out to make buying a luxury watch simpler: a carefully selected
           catalogue, transparent pricing, and delivery that begins only after
-          your payment is confirmed. Every piece we offer is new — ready for its
+          your payment is confirmed. Every piece we offer is new - ready for its
           first owner.
         </p>
         <p>

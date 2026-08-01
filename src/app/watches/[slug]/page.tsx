@@ -150,7 +150,7 @@ async function ProductDetail({ slug }: { slug: string }) {
         {related.length > 0 && (
           <section className="mt-20">
             <h2 className="font-playfair text-2xl mb-8">You May Also Like</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 md:gap-6">
               {related.map((w) => (
                 <ProductCard key={w.id} watch={w} />
               ))}

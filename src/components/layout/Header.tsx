@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { useCartStore, useWishlistStore } from "@/lib/store";
 import { SearchBar } from "@/components/search/SearchBar";
+import { BrandLogo } from "@/components/layout/BrandLogo";
 import { cn } from "@/lib/utils";
 
 const BRANDS = [
@@ -21,6 +22,13 @@ const BRANDS = [
   { name: "Hublot", slug: "hublot" },
   { name: "Cartier", slug: "cartier" },
   { name: "Louis Vuitton", slug: "louis-vuitton" },
+  { name: "Breitling", slug: "breitling" },
+  { name: "Tudor", slug: "tudor" },
+  { name: "IWC", slug: "iwc" },
+  { name: "Panerai", slug: "panerai" },
+  { name: "Bremont", slug: "bremont" },
+  { name: "Grand Seiko", slug: "grand-seiko" },
+  { name: "TAG Heuer", slug: "tag-heuer" },
 ];
 
 const PRICE_RANGES = [
@@ -82,11 +90,8 @@ export function Header() {
       <div className="border-b border-wf-border">
         <div className="max-w-7xl mx-auto px-4 flex items-center justify-between h-16">
           {/* Logo */}
-          <Link
-            href="/"
-            className="font-playfair text-2xl tracking-[2px] text-wf-black shrink-0"
-          >
-            COSY AURA WATCH STORE
+          <Link href="/" className="shrink-0 hover:opacity-90 transition-opacity">
+            <BrandLogo variant="light" size="md" />
           </Link>
 
           {/* Search - desktop */}

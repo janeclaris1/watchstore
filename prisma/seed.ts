@@ -19,7 +19,7 @@ import {
   downloadWosImages,
   fetchWosCollection,
 } from "../src/lib/watchesofswitzerland";
-import { toDaytonaPrice, toStorefrontPrice } from "../src/lib/utils";
+import { toBreitlingPrice, toDaytonaPrice, toStorefrontPrice } from "../src/lib/utils";
 
 const prisma = new PrismaClient();
 
@@ -30,9 +30,32 @@ const brands = [
   { name: "Hublot", slug: "hublot", logo: "/images/brands/hublot.png" },
   { name: "Cartier", slug: "cartier", logo: "/images/brands/cartier.png" },
   { name: "Louis Vuitton", slug: "louis-vuitton", logo: "/images/brands/louis-vuitton.png" },
+  { name: "Breitling", slug: "breitling", logo: "/images/brands/breitling.svg" },
+  { name: "Tudor", slug: "tudor", logo: "/images/brands/tudor.svg" },
+  { name: "IWC", slug: "iwc", logo: "/images/brands/iwc.svg" },
+  { name: "Panerai", slug: "panerai", logo: "/images/brands/panerai.svg" },
+  { name: "Bremont", slug: "bremont", logo: "/images/brands/bremont.svg" },
+  { name: "Grand Seiko", slug: "grand-seiko", logo: "/images/brands/grand-seiko.svg" },
+  { name: "TAG Heuer", slug: "tag-heuer", logo: "/images/brands/tag-heuer.svg" },
 ];
 
-const WATCHFINDER_BRANDS = ["rolex", "omega"];
+/** .com Watchfinder brands (existing Rolex/Omega pipeline). */
+const WATCHFINDER_COM_BRANDS = ["rolex", "omega"];
+
+/** UK Watchfinder special-offer brands - priced \$899.99–\$1299.99. */
+const WATCHFINDER_UK_BRANDS = [
+  "breitling",
+  "hublot",
+  "tudor",
+  "iwc",
+  "panerai",
+  "bremont",
+  "grand-seiko",
+  "tag-heuer",
+];
+
+const WATCHFINDER_BRANDS = [...WATCHFINDER_COM_BRANDS, ...WATCHFINDER_UK_BRANDS];
+const WATCHFINDER_UK_SET = new Set(WATCHFINDER_UK_BRANDS);
 const IMPORTED_IMAGE_PREFIX = "/images/watches/";
 const WRIST_IMPORTS: Array<{
   collectionKey: WristCollectionKey;
@@ -114,22 +137,81 @@ function inferCaseSize(series: string, reference: string) {
   if (fromReference) return `${fromReference}mm`;
 
   const seriesLower = series.toLowerCase();
+  if (seriesLower.includes("galactic 29") || seriesLower.includes("callistino")) return "29mm";
+  if (seriesLower.includes("clair de rose") || seriesLower.includes("carrera ladies")) return "30mm";
   if (seriesLower.includes("ladymatic")) return "34mm";
-  if (seriesLower.includes("planet ocean")) return "43.5mm";
-  if (seriesLower.includes("speedmaster")) return "42mm";
-  if (seriesLower.includes("aqua terra")) return "41mm";
-  if (seriesLower.includes("constellation")) return "39mm";
-  if (seriesLower.includes("daytona")) return "40mm";
+  if (seriesLower.includes("big bang") || seriesLower.includes("king power")) return "44mm";
+  if (seriesLower.includes("planet ocean") || seriesLower.includes("submersible")) return "43.5mm";
+  if (
+    seriesLower.includes("avenger") ||
+    seriesLower.includes("superocean") ||
+    seriesLower.includes("luminor") ||
+    seriesLower.includes("big pilot")
+  ) {
+    return "44mm";
+  }
+  if (
+    seriesLower.includes("navitimer") ||
+    seriesLower.includes("bentley") ||
+    seriesLower.includes("black bay") ||
+    seriesLower.includes("aquatimer")
+  ) {
+    return "43mm";
+  }
+  if (
+    seriesLower.includes("chronomat") ||
+    seriesLower.includes("colt") ||
+    seriesLower.includes("portugieser") ||
+    seriesLower.includes("monaco") ||
+    seriesLower.includes("carrera")
+  ) {
+    return "41mm";
+  }
+  if (seriesLower.includes("speedmaster") || seriesLower.includes("formula 1")) return "42mm";
+  if (seriesLower.includes("aqua terra") || seriesLower.includes("aquaracer")) return "41mm";
+  if (seriesLower.includes("constellation") || seriesLower.includes("portofino")) return "39mm";
+  if (seriesLower.includes("daytona") || seriesLower.includes("premier")) return "40mm";
   return "40mm";
 }
 
 function inferWaterResistance(series: string) {
   const seriesLower = series.toLowerCase();
-  if (seriesLower.includes("planet ocean")) return "600m";
-  if (seriesLower.includes("diver") || seriesLower.includes("seamaster 300")) return "300m";
-  if (seriesLower.includes("railmaster")) return "150m";
-  if (seriesLower.includes("speedmaster")) return "50m";
-  if (seriesLower.includes("daytona")) return "100m";
+  if (seriesLower.includes("planet ocean") || seriesLower.includes("submersible")) return "600m";
+  if (
+    seriesLower.includes("superocean") ||
+    seriesLower.includes("black bay") ||
+    seriesLower.includes("aquaracer") ||
+    seriesLower.includes("aquatimer") ||
+    seriesLower.includes("supermarine")
+  ) {
+    return "300m";
+  }
+  if (
+    seriesLower.includes("diver") ||
+    seriesLower.includes("seamaster 300") ||
+    seriesLower.includes("avenger") ||
+    seriesLower.includes("luminor marina")
+  ) {
+    return "300m";
+  }
+  if (seriesLower.includes("railmaster") || seriesLower.includes("colt")) return "150m";
+  if (seriesLower.includes("speedmaster") || seriesLower.includes("monaco")) return "50m";
+  if (
+    seriesLower.includes("daytona") ||
+    seriesLower.includes("chronomat") ||
+    seriesLower.includes("big bang") ||
+    seriesLower.includes("carrera")
+  ) {
+    return "100m";
+  }
+  if (
+    seriesLower.includes("navitimer") ||
+    seriesLower.includes("premier") ||
+    seriesLower.includes("portofino") ||
+    seriesLower.includes("portugieser")
+  ) {
+    return "30m";
+  }
   return "100m";
 }
 
@@ -138,26 +220,65 @@ function inferCategory(series: string) {
   if (
     seriesLower.includes("seamaster") ||
     seriesLower.includes("planet ocean") ||
-    seriesLower.includes("railmaster")
+    seriesLower.includes("railmaster") ||
+    seriesLower.includes("superocean") ||
+    seriesLower.includes("avenger") ||
+    seriesLower.includes("black bay") ||
+    seriesLower.includes("submariner") ||
+    seriesLower.includes("aquaracer") ||
+    seriesLower.includes("aquatimer") ||
+    seriesLower.includes("submersible") ||
+    seriesLower.includes("luminor") ||
+    seriesLower.includes("supermarine")
   ) {
     return "Dive Watches";
   }
-  if (seriesLower.includes("speedmaster") || seriesLower.includes("daytona")) {
+  if (
+    seriesLower.includes("speedmaster") ||
+    seriesLower.includes("daytona") ||
+    seriesLower.includes("navitimer") ||
+    seriesLower.includes("chronomat") ||
+    seriesLower.includes("colt") ||
+    seriesLower.includes("bentley") ||
+    seriesLower.includes("big bang") ||
+    seriesLower.includes("king power") ||
+    seriesLower.includes("carrera") ||
+    seriesLower.includes("monaco") ||
+    seriesLower.includes("formula 1") ||
+    seriesLower.includes("autavia") ||
+    seriesLower.includes("pilot")
+  ) {
     return "Sport Watches";
   }
   return "Dress Watches";
 }
 
 function inferGender(series: string) {
-  if (series.toLowerCase().includes("ladymatic")) return "WOMENS" as const;
+  const seriesLower = series.toLowerCase();
+  if (
+    seriesLower.includes("ladymatic") ||
+    seriesLower.includes("galactic 29") ||
+    seriesLower.includes("callistino") ||
+    seriesLower.includes("clair de rose") ||
+    seriesLower.includes("carrera ladies") ||
+    seriesLower.includes("ladies")
+  ) {
+    return "WOMENS" as const;
+  }
   return "UNISEX" as const;
+}
+
+function priceForWatchfinderOffer(brandSlug: string, offer: WatchfinderOffer): number {
+  const seed = `${offer.sku}-${offer.reference}`;
+  if (WATCHFINDER_UK_SET.has(brandSlug)) return toBreitlingPrice(seed);
+  return toStorefrontPrice(seed);
 }
 
 function inferCaseMaterial(series: string, reference: string) {
   const text = `${series} ${reference}`.toLowerCase();
-  if (text.includes("gold") || text.includes("sedna")) return "GOLD" as const;
+  if (text.includes("gold") || text.includes("sedna") || text.includes("bronzo")) return "GOLD" as const;
   if (text.includes("two-tone") || text.includes("bicolor")) return "TWO_TONE" as const;
-  if (text.includes("titanium")) return "TITANIUM" as const;
+  if (text.includes("titanium") || text.includes("carbotech")) return "TITANIUM" as const;
   if (text.includes("ceramic") || text.includes("dark side")) return "CERAMIC" as const;
   return "STEEL" as const;
 }
@@ -168,8 +289,8 @@ function inferStrapMaterial(series: string) {
   return "METAL" as const;
 }
 
-function buildDescription(offer: WatchfinderOffer) {
-  const price = toStorefrontPrice(`${offer.sku}-${offer.reference}`);
+function buildDescription(offer: WatchfinderOffer, brandSlug: string) {
+  const price = priceForWatchfinderOffer(brandSlug, offer);
   return `${offer.brand} ${offer.series} ${offer.reference}. Special offer price ${price.toLocaleString("en-US")} USD.`;
 }
 
@@ -222,8 +343,12 @@ async function seedBrandFromWatchfinder(brandSlug: string) {
     return;
   }
 
-  console.log(`Fetching Watchfinder ${brand.name} offers...`);
-  const offers = await fetchWatchfinderOffers(brandSlug);
+  const locale = WATCHFINDER_UK_SET.has(brandSlug) ? "uk" : "com";
+  console.log(`Fetching Watchfinder ${brand.name} offers (${locale})...`);
+  const offers = await fetchWatchfinderOffers(brandSlug, {
+    locale,
+    brandName: brand.name,
+  });
 
   if (offers.length === 0) {
     console.warn(`No Watchfinder offers found for ${brand.name}`);
@@ -261,9 +386,9 @@ async function seedBrandFromWatchfinder(brandSlug: string) {
         seriesId: series.id,
         model: offer.series,
         reference: offer.reference,
-        description: buildDescription(offer),
+        description: buildDescription(offer, brandSlug),
         conditionReport: buildConditionReport(offer),
-        price: toStorefrontPrice(`${offer.sku}-${offer.reference}`),
+        price: priceForWatchfinderOffer(brandSlug, offer),
         condition: inferCondition(offer.stockType, offer.year),
         year: offer.year,
         movement: "AUTOMATIC",
@@ -613,6 +738,32 @@ async function main() {
 
   if (only === "cartier") {
     await seedCartierFromWatchesOfSwitzerland();
+    console.log("Seeding complete!");
+    return;
+  }
+
+  if (only === "watchfinder-uk") {
+    for (const brandSlug of WATCHFINDER_UK_BRANDS) {
+      await seedBrandFromWatchfinder(brandSlug);
+    }
+    console.log("Seeding complete!");
+    return;
+  }
+
+  if (only) {
+    const targets = only
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
+    for (const brandSlug of targets) {
+      if (brandSlug === "cartier") {
+        await seedCartierFromWatchesOfSwitzerland();
+      } else if (WATCHFINDER_BRANDS.includes(brandSlug)) {
+        await seedBrandFromWatchfinder(brandSlug);
+      } else {
+        console.warn(`Unknown SEED_ONLY target: ${brandSlug}`);
+      }
+    }
     console.log("Seeding complete!");
     return;
   }

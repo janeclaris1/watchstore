@@ -81,8 +81,8 @@ export function CookieConsent() {
         <div className="flex flex-col lg:flex-row gap-6 lg:gap-10 p-5 md:p-7">
           <div className="flex-1 space-y-3 text-[13px] leading-relaxed text-wf-black">
             <p>
-              COSY AURA WATCH STORE uses cookies and similar technologies — including some
-              from trusted partners — for site performance, statistical analysis,
+              COSY AURA WATCH STORE uses cookies and similar technologies - including some
+              from trusted partners - for site performance, statistical analysis,
               personalisation, advertising, and social media features. You can accept or
               reject non-essential cookies at any time.
             </p>

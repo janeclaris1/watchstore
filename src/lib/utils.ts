@@ -25,6 +25,16 @@ export function toDaytonaPrice(seed: string): number {
   return toStorefrontPriceInRange(seed, 1149, 1599);
 }
 
+/** Breitling / mid-luxury Watchfinder offers: \$899.99–\$1299.99 (always ends in .99). */
+export function toBreitlingPrice(seed: string): number {
+  return toStorefrontPriceInRange(seed, 899, 1299);
+}
+
+/** Alias for Watchfinder special-offer brands priced like Breitling. */
+export function toWatchfinderOfferPrice(seed: string): number {
+  return toBreitlingPrice(seed);
+}
+
 /** Deterministic .99 price in an inclusive whole-dollar range. */
 export function toStorefrontPriceInRange(
   seed: string,

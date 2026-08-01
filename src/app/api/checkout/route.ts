@@ -124,7 +124,7 @@ export async function POST(req: Request) {
         price_data: {
           currency: "usd",
           product_data: {
-            name: `Shipping — ${selectedRate.name}`,
+            name: `Shipping - ${selectedRate.name}`,
           },
           unit_amount: Math.round(shippingCost * 100),
         },

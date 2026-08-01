@@ -41,7 +41,7 @@ export default async function AdminWatchesPage() {
                 <td className="p-3">{watch.brand.name}</td>
                 <td className="p-3">{watch.model}</td>
                 <td className="p-3 text-wf-gray">{watch.reference}</td>
-                <td className="p-3 text-wf-gray">{watch.category || "—"}</td>
+                <td className="p-3 text-wf-gray">{watch.category || "-"}</td>
                 <td className="p-3">{formatPrice(watch.price)}</td>
                 <td className="p-3">{conditionLabel(watch.condition)}</td>
                 <td className="p-3">{watch.featured ? "Yes" : "No"}</td>

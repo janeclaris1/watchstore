@@ -27,6 +27,7 @@ const config: Config = {
       animation: {
         "fade-up": "fadeUp 0.6s ease-out forwards",
         shimmer: "shimmer 2s infinite",
+        "brand-scroll": "brandScroll 45s linear infinite",
       },
       keyframes: {
         fadeUp: {
@@ -36,6 +37,10 @@ const config: Config = {
         shimmer: {
           "0%": { backgroundPosition: "-200% 0" },
           "100%": { backgroundPosition: "200% 0" },
+        },
+        brandScroll: {
+          "0%": { transform: "translateX(0)" },
+          "100%": { transform: "translateX(-50%)" },
         },
       },
     },

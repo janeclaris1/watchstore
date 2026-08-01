@@ -53,7 +53,7 @@ export default async function AdminCustomersPage() {
             {users.map((user) => (
               <tr key={user.id} className="border-t border-wf-border">
                 <td className="p-3">{user.email}</td>
-                <td className="p-3">{user.name || "—"}</td>
+                <td className="p-3">{user.name || "-"}</td>
                 <td className="p-3">{user._count.orders}</td>
                 <td className="p-3">{user._count.wishlist}</td>
                 <td className="p-3 text-wf-gray">
@@ -99,7 +99,7 @@ export default async function AdminCustomersPage() {
                 <td className="p-3 text-wf-gray">
                   {row._max.createdAt
                     ? new Date(row._max.createdAt).toLocaleDateString()
-                    : "—"}
+                    : "-"}
                 </td>
               </tr>
             ))}

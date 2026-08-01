@@ -15,7 +15,7 @@ export default function ShippingPage() {
   return (
     <ContentPage
       title="Shipping"
-      subtitle="Secure packaging and tracked delivery — your watch leaves our care only after payment is confirmed."
+      subtitle="Secure packaging and tracked delivery - your watch leaves our care only after payment is confirmed."
     >
       <ContentSection title="How shipping works">
         <p>
@@ -33,15 +33,15 @@ export default function ShippingPage() {
       <ContentSection title="Delivery options">
         <ul className="list-disc pl-5 space-y-2">
           <li>
-            <strong className="text-wf-black">Aramex</strong> — tracked courier
+            <strong className="text-wf-black">Aramex</strong> - tracked courier
             service with discreet packaging.
           </li>
           <li>
-            <strong className="text-wf-black">FedEx</strong> — insured domestic and
+            <strong className="text-wf-black">FedEx</strong> - insured domestic and
             international delivery.
           </li>
           <li>
-            <strong className="text-wf-black">DHL Express</strong> — priority express
+            <strong className="text-wf-black">DHL Express</strong> - priority express
             with full tracking.
           </li>
         </ul>
@@ -60,11 +60,12 @@ export default function ShippingPage() {
         </p>
       </ContentSection>
 
-      <ContentSection title="International orders">
+      <ContentSection title="Worldwide delivery">
         <p>
-          Select international destinations are supported. Duties, taxes, and
-          customs clearance (if applicable) are the responsibility of the
-          buyer unless stated otherwise at checkout.
+          We ship to all countries. Choose Aramex, FedEx, or DHL Express at
+          checkout - live rates are calculated for your destination. Duties,
+          taxes, and customs clearance (if applicable) are the responsibility of
+          the buyer unless stated otherwise at checkout.
         </p>
       </ContentSection>
 

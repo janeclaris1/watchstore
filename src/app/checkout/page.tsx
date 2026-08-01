@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useCartStore } from "@/lib/store";
 import { formatPrice } from "@/lib/utils";
 import type { LiveShippingRate } from "@/lib/shipping";
+import { COUNTRIES } from "@/lib/countries";
 import Link from "next/link";
 
 export default function CheckoutPage() {
@@ -225,18 +226,13 @@ export default function CheckoutPage() {
                   value={form.country}
                   onChange={(e) => setForm({ ...form, country: e.target.value })}
                   className="w-full px-4 py-3 border border-wf-border rounded text-sm focus:outline-none focus:border-gold bg-white"
+                  required
                 >
-                  <option value="US">United States</option>
-                  <option value="GB">United Kingdom</option>
-                  <option value="DE">Germany</option>
-                  <option value="FR">France</option>
-                  <option value="CA">Canada</option>
-                  <option value="AU">Australia</option>
-                  <option value="NL">Netherlands</option>
-                  <option value="IT">Italy</option>
-                  <option value="ES">Spain</option>
-                  <option value="AE">United Arab Emirates</option>
-                  <option value="SA">Saudi Arabia</option>
+                  {COUNTRIES.map((country) => (
+                    <option key={country.code} value={country.code}>
+                      {country.name}
+                    </option>
+                  ))}
                 </select>
               </div>
             </div>
@@ -334,7 +330,7 @@ export default function CheckoutPage() {
               </span>
               <span>
                 {!selectedRate
-                  ? "—"
+                  ? "-"
                   : formatPrice(shippingCost, currency)}
               </span>
             </div>

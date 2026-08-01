@@ -36,12 +36,12 @@ const FAQS = [
   {
     question: "Can I reserve a watch?",
     answer:
-      "Watches are sold on a first-come, first-served basis. Adding an item to your cart does not reserve it — complete checkout to secure your purchase.",
+      "Watches are sold on a first-come, first-served basis. Adding an item to your cart does not reserve it - complete checkout to secure your purchase.",
   },
   {
     question: "Do you ship internationally?",
     answer:
-      "We ship with Aramex, FedEx, and DHL Express to supported destinations. Courier options, prices, and estimated times appear at checkout.",
+      "We ship worldwide with Aramex, FedEx, and DHL Express. Courier options, live prices, and estimated times appear at checkout for your country.",
   },
   {
     question: "How do I track my order?",
