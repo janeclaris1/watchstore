@@ -32,6 +32,15 @@ export function FulfillOrderOnSuccess() {
           return;
         }
         setStatus("done");
+        if (data.emailSent === false) {
+          setStatus("error");
+          setMessage(
+            data.emailError
+              ? `Order paid, but confirmation email failed: ${data.emailError}`
+              : "Order paid, but confirmation email failed. Contact support."
+          );
+          return;
+        }
         if (data.reason === "Already fulfilled") {
           setMessage("Order already confirmed.");
         } else {

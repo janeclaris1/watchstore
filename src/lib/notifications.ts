@@ -34,12 +34,12 @@ export async function sendEmail({
   to: string;
   subject: string;
   html: string;
-}): Promise<boolean> {
+}): Promise<{ ok: boolean; error?: string }> {
   const apiKey = process.env.RESEND_API_KEY;
 
   if (!apiKey) {
     console.log("[email:dev]", { to, subject, html: html.slice(0, 200) });
-    return true;
+    return { ok: true };
   }
 
   try {
@@ -55,12 +55,15 @@ export async function sendEmail({
     if (!res.ok) {
       const err = await res.text();
       console.error("[email] Resend failed:", err);
-      return false;
+      return { ok: false, error: err.slice(0, 300) };
     }
-    return true;
+    return { ok: true };
   } catch (error) {
     console.error("[email] send failed:", error);
-    return false;
+    return {
+      ok: false,
+      error: error instanceof Error ? error.message : "send failed",
+    };
   }
 }
 
@@ -101,14 +104,16 @@ function emailShell(title: string, body: string) {
 </body></html>`;
 }
 
-export async function notifyOrderPaid(orderId: string) {
+export async function notifyOrderPaid(
+  orderId: string
+): Promise<{ ok: boolean; error?: string }> {
   const order = await prisma.order.findUnique({
     where: { id: orderId },
     include: {
       items: { include: { watch: { include: { brand: true } } } },
     },
   });
-  if (!order) return;
+  if (!order) return { ok: false, error: "Order not found" };
 
   const shortId = order.id.slice(0, 8).toUpperCase();
   const adminLink = `${SITE_URL}/admin/orders/${order.id}`;
@@ -121,7 +126,7 @@ export async function notifyOrderPaid(orderId: string) {
     orderId: order.id,
   });
 
-  await sendEmail({
+  const adminResult = await sendEmail({
     to: ADMIN_EMAIL,
     subject: `New order #${shortId} - ${formatPrice(order.total)}`,
     html: emailShell(
@@ -133,7 +138,7 @@ export async function notifyOrderPaid(orderId: string) {
     ),
   });
 
-  await sendEmail({
+  const customerResult = await sendEmail({
     to: order.email,
     subject: `Order confirmed #${shortId} - COSY AURA WATCH STORE`,
     html: emailShell(
@@ -145,6 +150,20 @@ export async function notifyOrderPaid(orderId: string) {
        <p style="margin-top:16px;">You'll receive another email when your order ships.</p>`
     ),
   });
+
+  if (!customerResult.ok) {
+    console.error("[email] customer confirmation failed:", customerResult.error);
+    return {
+      ok: false,
+      error: customerResult.error || adminResult.error || "Customer email failed",
+    };
+  }
+
+  if (!adminResult.ok) {
+    console.error("[email] admin notification failed:", adminResult.error);
+  }
+
+  return { ok: true };
 }
 
 export async function notifyOrderStatusChange(

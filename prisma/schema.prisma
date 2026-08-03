@@ -213,6 +213,7 @@ model Order {
   shippingCity     String?
   shippingPostcode String?
   shippingCountry  String?
+  confirmationEmailedAt DateTime?
   createdAt        DateTime    @default(now())
   updatedAt        DateTime    @updatedAt
 
