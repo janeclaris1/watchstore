@@ -1,100 +1,62 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import Image from "next/image";
+import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 import { useCartStore } from "@/lib/store";
 import { formatPrice } from "@/lib/utils";
-import type { LiveShippingRate } from "@/lib/shipping";
-import { COUNTRIES } from "@/lib/countries";
-import Link from "next/link";
+import { StripeEmbeddedCheckout } from "@/components/checkout/StripeEmbeddedCheckout";
 
 export default function CheckoutPage() {
-  const { items, totalPrice, currency } = useCartStore();
-  const [loading, setLoading] = useState(false);
-  const [ratesLoading, setRatesLoading] = useState(false);
-  const [rates, setRates] = useState<LiveShippingRate[]>([]);
-  const [ratesSource, setRatesSource] = useState<"easypost" | "fallback" | null>(null);
-  const [ratesWarning, setRatesWarning] = useState<string | undefined>();
-  const [selectedRateId, setSelectedRateId] = useState<string>("");
-  const [form, setForm] = useState({
-    email: "",
-    name: "",
-    address: "",
-    city: "",
-    state: "",
-    postcode: "",
-    country: "US",
-    createAccount: false,
-  });
-
-  const selectedRate = useMemo(
-    () => rates.find((rate) => rate.id === selectedRateId) || rates[0],
-    [rates, selectedRateId]
-  );
+  const { items, totalPrice, currency, clearCart } = useCartStore();
+  const [clientSecret, setClientSecret] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   const subtotal = totalPrice();
-  const shippingCost = selectedRate?.price ?? 0;
-  const orderTotal = subtotal + shippingCost;
 
-  const addressReady =
-    Boolean(form.address.trim()) &&
-    Boolean(form.city.trim()) &&
-    Boolean(form.postcode.trim()) &&
-    Boolean(form.country);
+  const cartKey = items.map((i) => `${i.watchId}:${i.quantity}:${i.price}`).join("|");
 
-  const loadRates = useCallback(async () => {
-    if (!addressReady) {
-      setRates([]);
-      setSelectedRateId("");
-      setRatesSource(null);
-      setRatesWarning(undefined);
+  const startCheckout = useCallback(async () => {
+    if (items.length === 0) {
+      setLoading(false);
       return;
     }
 
-    setRatesLoading(true);
+    setLoading(true);
+    setError(null);
     try {
-      const res = await fetch("/api/shipping/rates", {
+      const res = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          email: form.email || undefined,
-          address: {
-            name: form.name,
-            street1: form.address,
-            city: form.city,
-            state: form.state,
-            postcode: form.postcode,
-            country: form.country,
-          },
+          items: items.map((i) => ({
+            watchId: i.watchId,
+            quantity: i.quantity,
+            price: i.price,
+          })),
         }),
       });
       const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || "Failed to load rates");
+      if (!res.ok || !data.clientSecret) {
+        throw new Error(data.error || "Could not start checkout");
       }
-      const nextRates = (data.rates || []) as LiveShippingRate[];
-      setRates(nextRates);
-      setRatesSource(data.source);
-      setRatesWarning(data.warning);
-      setSelectedRateId((prev) =>
-        nextRates.some((rate) => rate.id === prev) ? prev : nextRates[0]?.id || ""
-      );
-    } catch (error) {
-      console.error(error);
-      setRates([]);
-      setRatesWarning("Could not load live shipping rates. Please try again.");
+      setClientSecret(data.clientSecret);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Checkout failed");
     } finally {
-      setRatesLoading(false);
+      setLoading(false);
     }
-  }, [addressReady, form.address, form.city, form.country, form.email, form.name, form.postcode, form.state]);
+    // cartKey captures item identity; items read from closure on each key change
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cartKey]);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      void loadRates();
-    }, 450);
-    return () => clearTimeout(timer);
-  }, [loadRates]);
+    void startCheckout();
+  }, [startCheckout]);
 
-  if (items.length === 0) {
+  if (items.length === 0 && !clientSecret) {
     return (
       <div className="max-w-2xl mx-auto px-4 py-20 text-center">
         <h1 className="font-playfair text-3xl mb-4">Checkout</h1>
@@ -106,253 +68,106 @@ export default function CheckoutPage() {
     );
   }
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!selectedRate) {
-      alert("Please wait for shipping rates, then choose a courier.");
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const res = await fetch("/api/checkout", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          items: items.map((i) => ({
-            watchId: i.watchId,
-            quantity: i.quantity,
-            price: i.price,
-          })),
-          email: form.email,
-          shipping: {
-            name: form.name,
-            address: form.address,
-            city: form.city,
-            state: form.state,
-            postcode: form.postcode,
-            country: form.country,
-            rateId: selectedRate.id,
-          },
-          createAccount: form.createAccount,
-        }),
-      });
-
-      const data = await res.json();
-      if (data.url) {
-        window.location.href = data.url;
-      } else {
-        alert(data.error || "Checkout failed. Please try again.");
-      }
-    } catch {
-      alert("Checkout failed. Please try again.");
-    }
-    setLoading(false);
-  }
-
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
-      <h1 className="font-playfair text-3xl mb-8">Checkout</h1>
+    <div className="min-h-[calc(100vh-8rem)] grid grid-cols-1 lg:grid-cols-2">
+      {/* Left: order summary — mirrors Stripe hosted Checkout summary pane */}
+      <aside className="bg-[#0a2540] text-white order-2 lg:order-1">
+        <div className="max-w-lg mx-auto lg:ml-auto lg:mr-0 px-6 py-8 lg:py-12 lg:pr-12 lg:pl-8">
+          <Link
+            href="/cart"
+            className="inline-flex items-center gap-2 text-sm text-white/70 hover:text-white mb-8"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            COSY AURA WATCH STORE
+          </Link>
 
-      <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-2 gap-10">
-        <div className="space-y-6">
-          <div>
-            <h2 className="font-semibold mb-4">Contact Information</h2>
-            <input
-              type="email"
-              placeholder="Email address"
-              required
-              value={form.email}
-              onChange={(e) => setForm({ ...form, email: e.target.value })}
-              className="w-full px-4 py-3 border border-wf-border rounded text-sm focus:outline-none focus:border-gold mb-3"
-            />
-            <label className="flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                checked={form.createAccount}
-                onChange={(e) => setForm({ ...form, createAccount: e.target.checked })}
-                className="rounded text-gold focus:ring-gold"
-              />
-              Create an account for faster checkout next time
-            </label>
-          </div>
+          <p className="text-sm text-white/60 mb-1">Pay COSY AURA</p>
+          <p className="text-3xl md:text-4xl font-semibold tracking-tight mb-8">
+            {formatPrice(subtotal, currency)}
+            <span className="block text-sm font-normal text-white/50 mt-1">
+              + shipping at next step
+            </span>
+          </p>
 
-          <div>
-            <h2 className="font-semibold mb-4">Shipping Address</h2>
-            <div className="space-y-3">
-              <input
-                type="text"
-                placeholder="Full name"
-                required
-                value={form.name}
-                onChange={(e) => setForm({ ...form, name: e.target.value })}
-                className="w-full px-4 py-3 border border-wf-border rounded text-sm focus:outline-none focus:border-gold"
-              />
-              <input
-                type="text"
-                placeholder="Address"
-                required
-                value={form.address}
-                onChange={(e) => setForm({ ...form, address: e.target.value })}
-                className="w-full px-4 py-3 border border-wf-border rounded text-sm focus:outline-none focus:border-gold"
-              />
-              <div className="grid grid-cols-2 gap-3">
-                <input
-                  type="text"
-                  placeholder="City"
-                  required
-                  value={form.city}
-                  onChange={(e) => setForm({ ...form, city: e.target.value })}
-                  className="w-full px-4 py-3 border border-wf-border rounded text-sm focus:outline-none focus:border-gold"
-                />
-                <input
-                  type="text"
-                  placeholder="State / Province"
-                  value={form.state}
-                  onChange={(e) => setForm({ ...form, state: e.target.value })}
-                  className="w-full px-4 py-3 border border-wf-border rounded text-sm focus:outline-none focus:border-gold"
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <input
-                  type="text"
-                  placeholder="Postcode"
-                  required
-                  value={form.postcode}
-                  onChange={(e) => setForm({ ...form, postcode: e.target.value })}
-                  className="w-full px-4 py-3 border border-wf-border rounded text-sm focus:outline-none focus:border-gold"
-                />
-                <select
-                  value={form.country}
-                  onChange={(e) => setForm({ ...form, country: e.target.value })}
-                  className="w-full px-4 py-3 border border-wf-border rounded text-sm focus:outline-none focus:border-gold bg-white"
-                  required
-                >
-                  {COUNTRIES.map((country) => (
-                    <option key={country.code} value={country.code}>
-                      {country.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-          </div>
-
-          <div>
-            <div className="flex items-center justify-between gap-3 mb-4">
-              <h2 className="font-semibold">Shipping Method</h2>
-              {ratesSource === "easypost" && (
-                <span className="text-xs text-green-700">Live carrier rates</span>
-              )}
-              {ratesSource === "fallback" && (
-                <span className="text-xs text-amber-700">Estimated rates</span>
-              )}
-            </div>
-
-            {!addressReady && (
-              <p className="text-sm text-wf-gray">
-                Enter your shipping address to see Aramex, FedEx, and DHL prices.
-              </p>
-            )}
-
-            {addressReady && ratesLoading && (
-              <p className="text-sm text-wf-gray">Fetching live rates…</p>
-            )}
-
-            {addressReady && !ratesLoading && rates.length === 0 && (
-              <p className="text-sm text-red-600">
-                {ratesWarning || "No shipping rates available for this address."}
-              </p>
-            )}
-
-            <div className="space-y-3">
-              {rates.map((method) => {
-                const selected = selectedRate?.id === method.id;
-                return (
-                  <label
-                    key={method.id}
-                    className={`flex items-start gap-3 border rounded-lg p-4 cursor-pointer transition-colors ${
-                      selected
-                        ? "border-gold bg-gold/5"
-                        : "border-wf-border hover:border-gold/50"
-                    }`}
-                  >
-                    <input
-                      type="radio"
-                      name="shippingMethod"
-                      value={method.id}
-                      checked={selected}
-                      onChange={() => setSelectedRateId(method.id)}
-                      className="mt-1 text-gold focus:ring-gold"
-                    />
-                    <span className="flex-1 min-w-0">
-                      <span className="flex items-center justify-between gap-3">
-                        <span className="font-medium text-sm">{method.name}</span>
-                        <span className="text-sm font-medium shrink-0">
-                          {formatPrice(method.price, currency)}
-                        </span>
-                      </span>
-                      <span className="block text-xs text-wf-gray mt-1">
-                        {method.description} · {method.eta}
-                      </span>
-                    </span>
-                  </label>
-                );
-              })}
-            </div>
-
-            {ratesWarning && ratesSource === "fallback" && (
-              <p className="text-xs text-amber-700 mt-3">{ratesWarning}</p>
-            )}
-          </div>
-        </div>
-
-        <div className="border border-wf-border rounded-lg p-6 h-fit">
-          <h2 className="font-playfair text-xl mb-6">Order Summary</h2>
-          <div className="space-y-4 mb-6">
+          <ul className="space-y-5">
             {items.map((item) => (
-              <div key={item.watchId} className="flex justify-between text-sm">
-                <span className="text-wf-gray">
-                  {item.brand} {item.model} x{item.quantity}
-                </span>
-                <span>{formatPrice(item.price * item.quantity, currency)}</span>
-              </div>
+              <li key={item.watchId} className="flex gap-4">
+                <div className="relative w-16 h-16 rounded-md overflow-hidden bg-white/10 shrink-0">
+                  {item.image ? (
+                    <Image
+                      src={item.image}
+                      alt={`${item.brand} ${item.model}`}
+                      fill
+                      className="object-cover"
+                      sizes="64px"
+                    />
+                  ) : null}
+                  {item.quantity > 1 && (
+                    <span className="absolute -top-1 -right-1 bg-white text-[#0a2540] text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center">
+                      {item.quantity}
+                    </span>
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium truncate">
+                    {item.brand} {item.model}
+                  </p>
+                  <p className="text-xs text-white/50 mt-0.5">Qty {item.quantity}</p>
+                </div>
+                <p className="text-sm font-medium shrink-0">
+                  {formatPrice(item.price * item.quantity, currency)}
+                </p>
+              </li>
             ))}
-          </div>
-          <div className="space-y-2 text-sm border-t border-wf-border pt-4 mb-4">
-            <div className="flex justify-between">
-              <span className="text-wf-gray">Subtotal</span>
+          </ul>
+
+          <div className="mt-8 pt-6 border-t border-white/15 space-y-2 text-sm">
+            <div className="flex justify-between text-white/70">
+              <span>Subtotal</span>
               <span>{formatPrice(subtotal, currency)}</span>
             </div>
-            <div className="flex justify-between">
-              <span className="text-wf-gray">
-                Shipping{selectedRate ? ` (${selectedRate.name})` : ""}
-              </span>
-              <span>
-                {!selectedRate
-                  ? "-"
-                  : formatPrice(shippingCost, currency)}
-              </span>
+            <div className="flex justify-between text-white/70">
+              <span>Shipping</span>
+              <span>Calculated in form</span>
+            </div>
+            <div className="flex justify-between text-base font-semibold pt-2">
+              <span>Total due</span>
+              <span>{formatPrice(subtotal, currency)}+</span>
             </div>
           </div>
-          <div className="border-t border-wf-border pt-4 mb-6">
-            <div className="flex justify-between font-playfair text-xl text-gold">
-              <span>Total</span>
-              <span>{formatPrice(orderTotal, currency)}</span>
-            </div>
-          </div>
-          <button
-            type="submit"
-            disabled={loading || !selectedRate || ratesLoading}
-            className="btn-gold w-full disabled:opacity-50"
-          >
-            {loading ? "Processing..." : "Pay with Stripe"}
-          </button>
-          <p className="text-xs text-wf-gray text-center mt-4">
-            Secure payment powered by Stripe
-          </p>
         </div>
-      </form>
+      </aside>
+
+      {/* Right: full Stripe Checkout embed (email, address, shipping, pay) */}
+      <section className="bg-white order-1 lg:order-2">
+        <div className="max-w-lg mx-auto lg:mr-auto lg:ml-0 px-4 sm:px-6 py-8 lg:py-12 lg:pl-12 lg:pr-8">
+          {loading && (
+            <p className="text-sm text-wf-gray py-20 text-center">
+              Loading secure checkout…
+            </p>
+          )}
+
+          {error && (
+            <div className="py-12 text-center space-y-4">
+              <p className="text-sm text-red-600">{error}</p>
+              <button type="button" className="btn-gold" onClick={() => void startCheckout()}>
+                Try again
+              </button>
+              <button
+                type="button"
+                className="block mx-auto text-sm text-wf-gray"
+                onClick={() => clearCart()}
+              >
+                Clear cart
+              </button>
+            </div>
+          )}
+
+          {!loading && !error && clientSecret && (
+            <StripeEmbeddedCheckout clientSecret={clientSecret} />
+          )}
+        </div>
+      </section>
     </div>
   );
 }

@@ -83,6 +83,30 @@ const BRANDS = [
     logo: `/images/brands/tag-heuer.svg?v=${LOGO_VERSION}`,
     width: 130,
   },
+  {
+    name: "Jacob & Co",
+    slug: "jacob-co",
+    logo: `/images/brands/jacob-co.svg?v=${LOGO_VERSION}`,
+    width: 140,
+  },
+  {
+    name: "Tissot",
+    slug: "tissot",
+    logo: `/images/brands/tissot.svg?v=${LOGO_VERSION}`,
+    width: 110,
+  },
+  {
+    name: "Timex",
+    slug: "timex",
+    logo: `/images/brands/timex.svg?v=${LOGO_VERSION}`,
+    width: 110,
+  },
+  {
+    name: "Vacheron Constantin",
+    slug: "vacheron-constantin",
+    logo: `/images/brands/vacheron-constantin.svg?v=${LOGO_VERSION}`,
+    width: 180,
+  },
 ];
 
 function BrandLogo({

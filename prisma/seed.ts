@@ -19,7 +19,19 @@ import {
   downloadWosImages,
   fetchWosCollection,
 } from "../src/lib/watchesofswitzerland";
-import { toBreitlingPrice, toDaytonaPrice, toStorefrontPrice } from "../src/lib/utils";
+import {
+  downloadMayorsImages,
+  fetchMayorsJacobCoProducts,
+} from "../src/lib/mayors";
+import {
+  toBreitlingPrice,
+  toDaytonaPrice,
+  toJacobCoPrice,
+  toStorefrontPrice,
+  toTissotPrice,
+  toHalfListedPrice,
+  toVacheronPrice,
+} from "../src/lib/utils";
 
 const prisma = new PrismaClient();
 
@@ -37,6 +49,14 @@ const brands = [
   { name: "Bremont", slug: "bremont", logo: "/images/brands/bremont.svg" },
   { name: "Grand Seiko", slug: "grand-seiko", logo: "/images/brands/grand-seiko.svg" },
   { name: "TAG Heuer", slug: "tag-heuer", logo: "/images/brands/tag-heuer.svg" },
+  { name: "Jacob & Co", slug: "jacob-co", logo: "/images/brands/jacob-co.svg" },
+  { name: "Tissot", slug: "tissot", logo: "/images/brands/tissot.svg" },
+  { name: "Timex", slug: "timex", logo: "/images/brands/timex.svg" },
+  {
+    name: "Vacheron Constantin",
+    slug: "vacheron-constantin",
+    logo: "/images/brands/vacheron-constantin.svg",
+  },
 ];
 
 /** .com Watchfinder brands (existing Rolex/Omega pipeline). */
@@ -229,7 +249,9 @@ function inferCategory(series: string) {
     seriesLower.includes("aquatimer") ||
     seriesLower.includes("submersible") ||
     seriesLower.includes("luminor") ||
-    seriesLower.includes("supermarine")
+    seriesLower.includes("supermarine") ||
+    seriesLower.includes("seastar") ||
+    seriesLower.includes("deepwater")
   ) {
     return "Dive Watches";
   }
@@ -246,9 +268,47 @@ function inferCategory(series: string) {
     seriesLower.includes("monaco") ||
     seriesLower.includes("formula 1") ||
     seriesLower.includes("autavia") ||
-    seriesLower.includes("pilot")
+    seriesLower.includes("pilot") ||
+    seriesLower.includes("epic x") ||
+    seriesLower.includes("epic sf") ||
+    seriesLower.includes("twin turbo") ||
+    seriesLower.includes("bugatti") ||
+    seriesLower.includes("prx") ||
+    seriesLower.includes("t-race") ||
+    seriesLower.includes("supersport") ||
+    seriesLower.includes("chrono xl") ||
+    seriesLower.includes("pr516") ||
+    seriesLower.includes("prc 100") ||
+    seriesLower.includes("pr 100") ||
+    seriesLower.includes("expedition") ||
+    seriesLower.includes("waterbury") ||
+    seriesLower.includes("q timex") ||
+    seriesLower.includes("ironman") ||
+    seriesLower.includes("overseas")
   ) {
     return "Sport Watches";
+  }
+  if (
+    seriesLower.includes("astronomia") ||
+    seriesLower.includes("fleurs de jardin") ||
+    seriesLower.includes("brilliant") ||
+    seriesLower.includes("le locle") ||
+    seriesLower.includes("ballade") ||
+    seriesLower.includes("gentleman") ||
+    seriesLower.includes("carson") ||
+    seriesLower.includes("classic dream") ||
+    seriesLower.includes("everytime") ||
+    seriesLower.includes("visodate") ||
+    seriesLower.includes("marlin") ||
+    seriesLower.includes("weekender") ||
+    seriesLower.includes("patrimony") ||
+    seriesLower.includes("traditionnelle") ||
+    seriesLower.includes("historiques") ||
+    seriesLower.includes("égérie") ||
+    seriesLower.includes("egerie") ||
+    seriesLower.includes("fiftysix")
+  ) {
+    return "Dress Watches";
   }
   return "Dress Watches";
 }
@@ -711,6 +771,404 @@ async function seedCartierFromWatchesOfSwitzerland() {
   console.log(`Imported ${imported} Cartier watches from Watches of Switzerland.`);
 }
 
+async function seedJacobCoFromMayors() {
+  const brand = await prisma.brand.findUnique({ where: { slug: "jacob-co" } });
+  if (!brand) {
+    console.warn("Jacob & Co brand not found");
+    return;
+  }
+
+  console.log("Fetching Jacob & Co collection from Mayors...");
+  const products = await fetchMayorsJacobCoProducts();
+
+  if (products.length === 0) {
+    console.warn("No Jacob & Co products found on Mayors");
+    return;
+  }
+
+  await deleteWatchesByImagePrefix(brand.id, "/images/watches/jacob-co/");
+
+  let imported = 0;
+  for (const product of products) {
+    const series = await prisma.series.upsert({
+      where: {
+        brandId_slug: {
+          brandId: brand.id,
+          slug: slugify(product.series),
+        },
+      },
+      update: { name: product.series },
+      create: {
+        brandId: brand.id,
+        name: product.series,
+        slug: slugify(product.series),
+      },
+    });
+
+    const imagePaths = await downloadMayorsImages(product);
+    if (imagePaths.length === 0) {
+      console.warn(`  skip ${product.reference} (no images)`);
+      continue;
+    }
+
+    const watchSlug = slugify(`jacob-co-${product.series}-${product.sku}`);
+    const price = toJacobCoPrice(`${product.sku}-${product.reference}`);
+
+    await prisma.watch.create({
+      data: {
+        slug: watchSlug,
+        brandId: brand.id,
+        seriesId: series.id,
+        model: product.title,
+        reference: product.reference,
+        description:
+          `${product.description} Listed at ${price.toFixed(2)} USD.`,
+        conditionReport: "New condition. Full details available on request.",
+        price,
+        condition: "UNWORN",
+        year: null,
+        movement: product.movement,
+        caseMaterial: product.caseMaterial,
+        caseSize: product.caseSize,
+        strapMaterial: product.strapMaterial,
+        dial: product.dial,
+        waterResistance: "30m",
+        gender: product.gender,
+        hasBox: true,
+        hasPapers: true,
+        featured: true,
+        category: product.category || inferCategory(product.series),
+        images: {
+          create: imagePaths.map((url, index) => ({
+            url,
+            alt: `${product.title} - image ${index + 1}`,
+            isPrimary: index === 0,
+            sortOrder: index,
+          })),
+        },
+      },
+    });
+
+    imported += 1;
+    console.log(
+      `  ...imported ${imported}/${products.length} [${product.series}] ${product.reference}`
+    );
+  }
+
+  console.log(`Imported ${imported} Jacob & Co watches from Mayors.`);
+}
+
+async function seedTissotFromWatchesOfSwitzerland() {
+  const brand = await prisma.brand.findUnique({ where: { slug: "tissot" } });
+  if (!brand) {
+    console.warn("Tissot brand not found");
+    return;
+  }
+
+  console.log("Fetching Tissot collection from Watches of Switzerland...");
+  const products = await fetchWosCollection("tissot");
+
+  if (products.length === 0) {
+    console.warn("No Tissot products found");
+    return;
+  }
+
+  await deleteWatchesByImagePrefix(
+    brand.id,
+    "/images/watches/watchesofswitzerland/tissot/"
+  );
+
+  let imported = 0;
+  for (const product of products) {
+    const series = await prisma.series.upsert({
+      where: {
+        brandId_slug: {
+          brandId: brand.id,
+          slug: slugify(product.series),
+        },
+      },
+      update: { name: product.series },
+      create: {
+        brandId: brand.id,
+        name: product.series,
+        slug: slugify(product.series),
+      },
+    });
+
+    let imagePaths: string[];
+    try {
+      imagePaths = await downloadWosImages(product);
+    } catch (error) {
+      console.warn(
+        `  skip ${product.reference || product.sku}: ${
+          error instanceof Error ? error.message : error
+        }`
+      );
+      continue;
+    }
+
+    const modelName = product.title.split("|")[0].trim().replace(/^Tissot\s+/i, "");
+    const watchSlug = slugify(`tissot-${product.series}-${product.sku}`);
+    const price = toTissotPrice(`${product.sku}-${product.reference}`);
+
+    await prisma.watch.create({
+      data: {
+        slug: watchSlug,
+        brandId: brand.id,
+        seriesId: series.id,
+        model: modelName,
+        reference: product.reference,
+        description:
+          (product.description || product.title) +
+          ` Listed at ${price.toFixed(2)} USD.`,
+        conditionReport: "New condition. Full details available on request.",
+        price,
+        condition: "UNWORN",
+        year: product.year,
+        movement: product.movement,
+        caseMaterial: product.caseMaterial,
+        caseSize: product.caseSize ?? "40mm",
+        strapMaterial: product.strapMaterial,
+        dial: product.dial ?? "Silver",
+        waterResistance: product.category === "Dive Watches" ? "300m" : "100m",
+        gender: product.gender,
+        hasBox: true,
+        hasPapers: true,
+        featured: imported < 12,
+        category: product.category || inferCategory(product.series),
+        images: {
+          create: imagePaths.map((url, index) => ({
+            url,
+            alt: `${product.title} - image ${index + 1}`,
+            isPrimary: index === 0,
+            sortOrder: index,
+          })),
+        },
+      },
+    });
+
+    imported += 1;
+    if (imported % 20 === 0 || imported === products.length) {
+      console.log(`  ...imported ${imported}/${products.length} [${product.series}]`);
+    }
+  }
+
+  console.log(`Imported ${imported} Tissot watches from Watches of Switzerland.`);
+}
+
+async function seedTimexFromWatchesOfSwitzerland() {
+  const brand = await prisma.brand.findUnique({ where: { slug: "timex" } });
+  if (!brand) {
+    console.warn("Timex brand not found");
+    return;
+  }
+
+  console.log("Fetching Timex collection from Watches of Switzerland...");
+  const products = await fetchWosCollection("timex");
+
+  if (products.length === 0) {
+    console.warn("No Timex products found");
+    return;
+  }
+
+  await deleteWatchesByImagePrefix(
+    brand.id,
+    "/images/watches/watchesofswitzerland/timex/"
+  );
+
+  let imported = 0;
+  for (const product of products) {
+    const series = await prisma.series.upsert({
+      where: {
+        brandId_slug: {
+          brandId: brand.id,
+          slug: slugify(product.series),
+        },
+      },
+      update: { name: product.series },
+      create: {
+        brandId: brand.id,
+        name: product.series,
+        slug: slugify(product.series),
+      },
+    });
+
+    let imagePaths: string[];
+    try {
+      imagePaths = await downloadWosImages(product);
+    } catch (error) {
+      console.warn(
+        `  skip ${product.reference || product.sku}: ${
+          error instanceof Error ? error.message : error
+        }`
+      );
+      continue;
+    }
+
+    const modelName = product.title
+      .split("|")[0]
+      .trim()
+      .replace(/^Timex\s+/i, "")
+      .replace(/®/g, "");
+    const watchSlug = slugify(`timex-${product.series}-${product.sku}`);
+    const price = toHalfListedPrice(product.price);
+
+    await prisma.watch.create({
+      data: {
+        slug: watchSlug,
+        brandId: brand.id,
+        seriesId: series.id,
+        model: modelName,
+        reference: product.reference,
+        description:
+          (product.description || product.title) +
+          ` Listed at ${price.toFixed(2)} USD.`,
+        conditionReport: "New condition. Full details available on request.",
+        price,
+        condition: "UNWORN",
+        year: product.year,
+        movement: product.movement,
+        caseMaterial: product.caseMaterial,
+        caseSize: product.caseSize ?? "40mm",
+        strapMaterial: product.strapMaterial,
+        dial: product.dial ?? "Silver",
+        waterResistance: product.category === "Dive Watches" ? "200m" : "50m",
+        gender: product.gender,
+        hasBox: true,
+        hasPapers: true,
+        featured: imported < 12,
+        category: product.category || inferCategory(product.series),
+        images: {
+          create: imagePaths.map((url, index) => ({
+            url,
+            alt: `${product.title} - image ${index + 1}`,
+            isPrimary: index === 0,
+            sortOrder: index,
+          })),
+        },
+      },
+    });
+
+    imported += 1;
+    if (imported % 20 === 0 || imported === products.length) {
+      console.log(
+        `  ...imported ${imported}/${products.length} [${product.series}] $${price.toFixed(2)}`
+      );
+    }
+  }
+
+  console.log(`Imported ${imported} Timex watches from Watches of Switzerland.`);
+}
+
+async function seedVacheronFromWatchesOfSwitzerland() {
+  const brand = await prisma.brand.findUnique({
+    where: { slug: "vacheron-constantin" },
+  });
+  if (!brand) {
+    console.warn("Vacheron Constantin brand not found");
+    return;
+  }
+
+  console.log("Fetching Vacheron Constantin from Watches of Switzerland...");
+  const products = await fetchWosCollection("vacheron-constantin");
+
+  if (products.length === 0) {
+    console.warn("No Vacheron Constantin products found");
+    return;
+  }
+
+  await deleteWatchesByImagePrefix(
+    brand.id,
+    "/images/watches/watchesofswitzerland/vacheron-constantin/"
+  );
+
+  let imported = 0;
+  for (const product of products) {
+    const series = await prisma.series.upsert({
+      where: {
+        brandId_slug: {
+          brandId: brand.id,
+          slug: slugify(product.series),
+        },
+      },
+      update: { name: product.series },
+      create: {
+        brandId: brand.id,
+        name: product.series,
+        slug: slugify(product.series),
+      },
+    });
+
+    let imagePaths: string[];
+    try {
+      imagePaths = await downloadWosImages(product);
+    } catch (error) {
+      console.warn(
+        `  skip ${product.reference || product.sku}: ${
+          error instanceof Error ? error.message : error
+        }`
+      );
+      continue;
+    }
+
+    const modelName = product.title
+      .split("|")[0]
+      .trim()
+      .replace(/^Vacheron Constantin\s+/i, "");
+    const watchSlug = slugify(
+      `vacheron-constantin-${product.series}-${product.sku}`
+    );
+    const price = toVacheronPrice(`${product.sku}-${product.reference}`);
+
+    await prisma.watch.create({
+      data: {
+        slug: watchSlug,
+        brandId: brand.id,
+        seriesId: series.id,
+        model: modelName,
+        reference: product.reference,
+        description:
+          (product.description || product.title) +
+          ` Listed at ${price.toFixed(2)} USD.`,
+        conditionReport: "New condition. Full details available on request.",
+        price,
+        condition: "UNWORN",
+        year: product.year,
+        movement: product.movement,
+        caseMaterial: product.caseMaterial,
+        caseSize: product.caseSize ?? "40mm",
+        strapMaterial: product.strapMaterial,
+        dial: product.dial ?? "Silver",
+        waterResistance: product.series === "Overseas" ? "150m" : "30m",
+        gender: product.gender,
+        hasBox: true,
+        hasPapers: true,
+        featured: imported < 12,
+        category: product.category || inferCategory(product.series),
+        images: {
+          create: imagePaths.map((url, index) => ({
+            url,
+            alt: `${product.title} - image ${index + 1}`,
+            isPrimary: index === 0,
+            sortOrder: index,
+          })),
+        },
+      },
+    });
+
+    imported += 1;
+    if (imported % 15 === 0 || imported === products.length) {
+      console.log(
+        `  ...imported ${imported}/${products.length} [${product.series}]`
+      );
+    }
+  }
+
+  console.log(
+    `Imported ${imported} Vacheron Constantin watches from Watches of Switzerland.`
+  );
+}
+
 async function main() {
   console.log("Seeding database...");
 
@@ -742,6 +1200,34 @@ async function main() {
     return;
   }
 
+  if (only === "jacob-co" || only === "jacob") {
+    await seedJacobCoFromMayors();
+    console.log("Seeding complete!");
+    return;
+  }
+
+  if (only === "tissot") {
+    await seedTissotFromWatchesOfSwitzerland();
+    console.log("Seeding complete!");
+    return;
+  }
+
+  if (only === "timex") {
+    await seedTimexFromWatchesOfSwitzerland();
+    console.log("Seeding complete!");
+    return;
+  }
+
+  if (
+    only === "vacheron-constantin" ||
+    only === "vacheron" ||
+    only === "vc"
+  ) {
+    await seedVacheronFromWatchesOfSwitzerland();
+    console.log("Seeding complete!");
+    return;
+  }
+
   if (only === "watchfinder-uk") {
     for (const brandSlug of WATCHFINDER_UK_BRANDS) {
       await seedBrandFromWatchfinder(brandSlug);
@@ -758,6 +1244,18 @@ async function main() {
     for (const brandSlug of targets) {
       if (brandSlug === "cartier") {
         await seedCartierFromWatchesOfSwitzerland();
+      } else if (brandSlug === "jacob-co" || brandSlug === "jacob") {
+        await seedJacobCoFromMayors();
+      } else if (brandSlug === "tissot") {
+        await seedTissotFromWatchesOfSwitzerland();
+      } else if (brandSlug === "timex") {
+        await seedTimexFromWatchesOfSwitzerland();
+      } else if (
+        brandSlug === "vacheron-constantin" ||
+        brandSlug === "vacheron" ||
+        brandSlug === "vc"
+      ) {
+        await seedVacheronFromWatchesOfSwitzerland();
       } else if (WATCHFINDER_BRANDS.includes(brandSlug)) {
         await seedBrandFromWatchfinder(brandSlug);
       } else {
@@ -778,6 +1276,10 @@ async function main() {
 
   await seedHublotFromLuxurytime();
   await seedCartierFromWatchesOfSwitzerland();
+  await seedJacobCoFromMayors();
+  await seedTissotFromWatchesOfSwitzerland();
+  await seedTimexFromWatchesOfSwitzerland();
+  await seedVacheronFromWatchesOfSwitzerland();
   await removeNonImportedWatches();
 
   console.log("Seeding complete!");

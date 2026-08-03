@@ -9,6 +9,10 @@ const SHOP_LINKS = [
   { label: "Patex Philippe", href: "/watches/patek-philippe" },
   { label: "Omega", href: "/watches/omega" },
   { label: "Hublot", href: "/watches/hublot" },
+  { label: "Jacob & Co", href: "/watches/jacob-co" },
+  { label: "Tissot", href: "/watches/tissot" },
+  { label: "Timex", href: "/watches/timex" },
+  { label: "Vacheron Constantin", href: "/watches/vacheron-constantin" },
 ];
 
 const SUPPORT_LINKS = [
@@ -21,6 +25,7 @@ const SUPPORT_LINKS = [
 
 const COMPANY_LINKS = [
   { label: "About Us", href: "/about" },
+  { label: "Journal", href: "/blog" },
   { label: "Careers", href: "/careers" },
   { label: "Press", href: "/press" },
   { label: "Sustainability", href: "/sustainability" },
@@ -53,10 +58,15 @@ export function Footer() {
             <div className="mb-5">
               <BrandLogo variant="dark" size="lg" />
             </div>
-            <p className="text-sm text-gray-400 leading-relaxed mb-6">
+            <p className="text-sm text-gray-400 leading-relaxed mb-4">
               Premium luxury watch store. Every watch is sold new and delivered
               after successful payment confirmation.
             </p>
+            <address className="not-italic text-sm text-gray-400 leading-relaxed mb-6">
+              30 N Gould St Ste R
+              <br />
+              Sheridan, WY 82801
+            </address>
             <div className="flex gap-4">
               <a href="#" className="text-gray-400 hover:text-gold transition-colors">
                 <Instagram className="w-5 h-5" />

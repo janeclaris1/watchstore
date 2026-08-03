@@ -1,33 +1,57 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { stripe } from "@/lib/stripe";
-import { fetchLiveShippingRates, findRateById } from "@/lib/shipping";
+import { FALLBACK_SHIPPING_RATES } from "@/lib/shipping";
+import { COUNTRIES } from "@/lib/countries";
 
 function toAbsoluteImageUrl(url: string | undefined | null): string | null {
   if (!url) return null;
   if (url.startsWith("http://") || url.startsWith("https://")) return url;
-  const base = process.env.NEXTAUTH_URL?.replace(/\/$/, "");
+  const base =
+    process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ||
+    process.env.NEXTAUTH_URL?.replace(/\/$/, "");
   if (!base || base.includes("localhost")) return null;
   return `${base}${url.startsWith("/") ? url : `/${url}`}`;
+}
+
+/**
+ * Stripe Checkout shipping_address_collection only accepts this set.
+ * (Excludes sanctions / unsupported codes like CU, IR, KP, SY, etc.)
+ */
+const STRIPE_SHIPPING_COUNTRY_CODES = new Set([
+  "AC","AD","AE","AF","AG","AI","AL","AM","AO","AQ","AR","AT","AU","AW","AX","AZ",
+  "BA","BB","BD","BE","BF","BG","BH","BI","BJ","BL","BM","BN","BO","BQ","BR","BS",
+  "BT","BV","BW","BY","BZ","CA","CD","CF","CG","CH","CI","CK","CL","CM","CN","CO",
+  "CR","CV","CW","CY","CZ","DE","DJ","DK","DM","DO","DZ","EC","EE","EG","EH","ER",
+  "ES","ET","FI","FJ","FK","FO","FR","GA","GB","GD","GE","GF","GG","GH","GI","GL",
+  "GM","GN","GP","GQ","GR","GS","GT","GU","GW","GY","HK","HN","HR","HT","HU","ID",
+  "IE","IL","IM","IN","IO","IQ","IS","IT","JE","JM","JO","JP","KE","KG","KH","KI",
+  "KM","KN","KR","KW","KY","KZ","LA","LB","LC","LI","LK","LR","LS","LT","LU","LV",
+  "LY","MA","MC","MD","ME","MF","MG","MK","ML","MM","MN","MO","MQ","MR","MS","MT",
+  "MU","MV","MW","MX","MY","MZ","NA","NC","NE","NG","NI","NL","NO","NP","NR","NU",
+  "NZ","OM","PA","PE","PF","PG","PH","PK","PL","PM","PN","PR","PS","PT","PY","QA",
+  "RE","RO","RS","RU","RW","SA","SB","SC","SD","SE","SG","SH","SI","SJ","SK","SL",
+  "SM","SN","SO","SR","SS","ST","SV","SX","SZ","TA","TC","TD","TF","TG","TH","TJ",
+  "TK","TL","TM","TN","TO","TR","TT","TV","TW","TZ","UA","UG","US","UY","UZ","VA",
+  "VC","VE","VG","VN","VU","WF","WS","XK","YE","YT","ZA","ZM","ZW","ZZ",
+]);
+
+function allowedShippingCountries(): string[] {
+  return COUNTRIES.map((c) => c.code).filter((code) =>
+    STRIPE_SHIPPING_COUNTRY_CODES.has(code)
+  );
 }
 
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { items, email, shipping } = body;
+    const { items } = body;
 
-    if (!items?.length || !email) {
-      return NextResponse.json({ error: "Invalid request" }, { status: 400 });
-    }
-
-    if (!shipping?.address || !shipping?.city || !shipping?.postcode || !shipping?.country) {
-      return NextResponse.json({ error: "Shipping address required" }, { status: 400 });
+    if (!items?.length) {
+      return NextResponse.json({ error: "Your cart is empty" }, { status: 400 });
     }
 
     if (!process.env.STRIPE_SECRET_KEY?.startsWith("sk_")) {
-      console.error(
-        "Checkout error: STRIPE_SECRET_KEY must be a secret key starting with sk_test_ or sk_live_"
-      );
       return NextResponse.json(
         {
           error:
@@ -37,48 +61,23 @@ export async function POST(req: Request) {
       );
     }
 
-    const country = String(shipping.country);
-    const quote = await fetchLiveShippingRates({
-      name: shipping.name,
-      street1: shipping.address,
-      city: shipping.city,
-      state: shipping.state,
-      zip: shipping.postcode,
-      country,
-      email,
-    });
-
-    const selectedRate =
-      findRateById(quote.rates, shipping.rateId) || quote.rates[0];
-
-    if (!selectedRate) {
-      return NextResponse.json(
-        { error: "No shipping rates available for this address" },
-        { status: 400 }
-      );
+    if (!stripe) {
+      return NextResponse.json({ error: "Stripe not configured" }, { status: 503 });
     }
-
-    const shippingCost = selectedRate.price;
-    const shippingMethodLabel = `${selectedRate.carrier} · ${selectedRate.service}`;
 
     const itemsTotal = items.reduce(
       (sum: number, item: { price: number; quantity: number }) =>
         sum + item.price * item.quantity,
       0
     );
-    const total = itemsTotal + shippingCost;
 
+    // Provisional order — email/shipping filled from Stripe session on payment
     const order = await prisma.order.create({
       data: {
-        email,
-        total,
-        shippingMethod: shippingMethodLabel,
-        shippingCost,
-        shippingName: shipping?.name,
-        shippingAddress: shipping?.address,
-        shippingCity: shipping?.city,
-        shippingPostcode: shipping?.postcode,
-        shippingCountry: country,
+        email: "pending@checkout.cosyaura.us",
+        total: itemsTotal,
+        shippingMethod: null,
+        shippingCost: 0,
         items: {
           create: items.map(
             (item: { watchId: string; price: number; quantity: number }) => ({
@@ -91,62 +90,66 @@ export async function POST(req: Request) {
       },
     });
 
-    if (!stripe) {
-      return NextResponse.json(
-        { error: "Stripe not configured" },
-        { status: 503 }
-      );
-    }
-
     const lineItems = await Promise.all(
-      items.map(async (item: { watchId: string; quantity: number; price: number }) => {
-        const watch = await prisma.watch.findUnique({
-          where: { id: item.watchId },
-          include: { brand: true, images: true },
-        });
-        const imageUrl = toAbsoluteImageUrl(watch?.images[0]?.url);
-        return {
-          price_data: {
-            currency: "usd",
-            product_data: {
-              name: watch ? `${watch.brand.name} ${watch.model}` : "Watch",
-              ...(imageUrl ? { images: [imageUrl] } : {}),
+      items.map(
+        async (item: { watchId: string; quantity: number; price: number }) => {
+          const watch = await prisma.watch.findUnique({
+            where: { id: item.watchId },
+            include: { brand: true, images: true },
+          });
+          const imageUrl = toAbsoluteImageUrl(watch?.images[0]?.url);
+          return {
+            price_data: {
+              currency: "usd",
+              product_data: {
+                name: watch ? `${watch.brand.name} ${watch.model}` : "Watch",
+                description: watch?.reference
+                  ? `Ref. ${watch.reference}`
+                  : undefined,
+                ...(imageUrl ? { images: [imageUrl] } : {}),
+              },
+              unit_amount: Math.round(item.price * 100),
             },
-            unit_amount: Math.round(item.price * 100),
-          },
-          quantity: item.quantity,
-        };
-      })
+            quantity: item.quantity,
+          };
+        }
+      )
     );
 
-    if (shippingCost > 0) {
-      lineItems.push({
-        price_data: {
-          currency: "usd",
-          product_data: {
-            name: `Shipping - ${selectedRate.name}`,
-          },
-          unit_amount: Math.round(shippingCost * 100),
-        },
-        quantity: 1,
-      });
-    }
-
     const baseUrl =
-      process.env.NEXTAUTH_URL?.replace(/\/$/, "") || "http://localhost:3000";
+      process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ||
+      process.env.NEXTAUTH_URL?.replace(/\/$/, "") ||
+      "http://localhost:3000";
 
     const session = await stripe.checkout.sessions.create({
-      payment_method_types: ["card"],
-      line_items: lineItems,
+      ui_mode: "embedded",
       mode: "payment",
-      success_url: `${baseUrl}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${baseUrl}/cart`,
-      customer_email: email,
+      line_items: lineItems,
+      // Full Checkout form: email, shipping address, shipping method, payment
+      billing_address_collection: "auto",
+      shipping_address_collection: {
+        allowed_countries: allowedShippingCountries() as never[],
+      },
+      shipping_options: FALLBACK_SHIPPING_RATES.map((rate) => ({
+        shipping_rate_data: {
+          type: "fixed_amount" as const,
+          fixed_amount: {
+            amount: Math.round(rate.price * 100),
+            currency: "usd",
+          },
+          display_name: `${rate.name} · ${rate.eta}`,
+          delivery_estimate: {
+            minimum: { unit: "business_day" as const, value: 2 },
+            maximum: {
+              unit: "business_day" as const,
+              value: Math.max(rate.deliveryDays || 8, 3),
+            },
+          },
+        },
+      })),
+      return_url: `${baseUrl}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
       metadata: {
         orderId: order.id,
-        shippingMethod: shippingMethodLabel,
-        shippingRateId: selectedRate.id,
-        shippingSource: quote.source,
       },
     });
 
@@ -155,7 +158,18 @@ export async function POST(req: Request) {
       data: { stripeSessionId: session.id },
     });
 
-    return NextResponse.json({ url: session.url });
+    if (!session.client_secret) {
+      return NextResponse.json(
+        { error: "Stripe did not return a client secret for embedded checkout" },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({
+      clientSecret: session.client_secret,
+      sessionId: session.id,
+      orderId: order.id,
+    });
   } catch (error) {
     console.error("Checkout error:", error);
     const message =

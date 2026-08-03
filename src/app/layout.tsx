@@ -45,6 +45,7 @@ export const metadata: Metadata = {
   },
   other: {
     "algolia-site-verification": "163E676A1222ACC2",
+    "google-site-verification": "haMsw6zpccbx1gi_9riec7AZ1j7zJVRM1VntR7oY9HA",
   },
 };
 
@@ -60,6 +61,10 @@ export default async function RootLayout({
     <html lang="en" className={`${playfair.variable} ${inter.variable} ${cantora.variable}`}>
       <head>
         <meta name="algolia-site-verification" content="163E676A1222ACC2" />
+        <meta
+          name="google-site-verification"
+          content="haMsw6zpccbx1gi_9riec7AZ1j7zJVRM1VntR7oY9HA"
+        />
       </head>
       <body>
         <Providers>

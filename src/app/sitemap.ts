@@ -14,6 +14,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const staticPages = [
     "/about",
+    "/blog",
     "/careers",
     "/press",
     "/sustainability",
@@ -25,9 +26,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ];
 
   try {
-    const [watches, brands] = await Promise.all([
+    const [watches, brands, posts] = await Promise.all([
       prisma.watch.findMany({ select: { slug: true, updatedAt: true } }),
       prisma.brand.findMany({ select: { slug: true, updatedAt: true } }),
+      prisma.blogPost.findMany({
+        where: { published: true },
+        select: { slug: true, updatedAt: true },
+      }),
     ]);
 
     return [
@@ -60,6 +65,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         lastModified: w.updatedAt,
         changeFrequency: "weekly" as const,
         priority: 0.7,
+      })),
+      ...posts.map((p) => ({
+        url: `${baseUrl}/blog/${p.slug}`,
+        lastModified: p.updatedAt,
+        changeFrequency: "monthly" as const,
+        priority: 0.6,
       })),
     ];
   } catch {

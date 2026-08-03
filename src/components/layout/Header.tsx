@@ -13,6 +13,7 @@ import {
 import { useCartStore, useWishlistStore } from "@/lib/store";
 import { SearchBar } from "@/components/search/SearchBar";
 import { BrandLogo } from "@/components/layout/BrandLogo";
+import { TopUtilityBar } from "@/components/layout/TopUtilityBar";
 import { cn } from "@/lib/utils";
 
 const BRANDS = [
@@ -29,6 +30,10 @@ const BRANDS = [
   { name: "Bremont", slug: "bremont" },
   { name: "Grand Seiko", slug: "grand-seiko" },
   { name: "TAG Heuer", slug: "tag-heuer" },
+  { name: "Jacob & Co", slug: "jacob-co" },
+  { name: "Tissot", slug: "tissot" },
+  { name: "Timex", slug: "timex" },
+  { name: "Vacheron Constantin", slug: "vacheron-constantin" },
 ];
 
 const PRICE_RANGES = [
@@ -86,8 +91,10 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-40 bg-white">
+      <TopUtilityBar />
+
       {/* Top Nav */}
-      <div className="border-b border-wf-border">
+      <div className="border-b border-wf-border bg-white">
         <div className="max-w-7xl mx-auto px-4 flex items-center justify-between h-16">
           {/* Logo */}
           <Link href="/" className="shrink-0 hover:opacity-90 transition-opacity">
@@ -220,6 +227,13 @@ export function Header() {
               </Link>
             ))}
           </NavDropdown>
+
+          <Link
+            href="/blog"
+            className="px-4 py-3 text-sm font-medium hover:text-gold transition-colors"
+          >
+            Journal
+          </Link>
         </div>
       </nav>
 
@@ -256,6 +270,13 @@ export function Header() {
               ))}
             </div>
           </div>
+          <Link
+            href="/blog"
+            className="block text-sm py-1.5 font-medium hover:text-gold"
+            onClick={() => setMobileOpen(false)}
+          >
+            Journal
+          </Link>
         </div>
       </div>
     </header>

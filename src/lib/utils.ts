@@ -30,6 +30,26 @@ export function toBreitlingPrice(seed: string): number {
   return toStorefrontPriceInRange(seed, 899, 1299);
 }
 
+/** Jacob & Co storefront range: \$1499.99–\$2199.99 (always ends in .99). */
+export function toJacobCoPrice(seed: string): number {
+  return toStorefrontPriceInRange(seed, 1499, 2199);
+}
+
+/** Tissot storefront range: \$249.99–\$549.99 (always ends in .99). */
+export function toTissotPrice(seed: string): number {
+  return toStorefrontPriceInRange(seed, 249, 549);
+}
+
+/** Half of a listed retail price, rounded to cents. */
+export function toHalfListedPrice(listedPrice: number): number {
+  return Math.round(Number(listedPrice) * 50) / 100;
+}
+
+/** Vacheron Constantin storefront range: \$1599.99–\$2349.99 (always ends in .99). */
+export function toVacheronPrice(seed: string): number {
+  return toStorefrontPriceInRange(seed, 1599, 2349);
+}
+
 /** Alias for Watchfinder special-offer brands priced like Breitling. */
 export function toWatchfinderOfferPrice(seed: string): number {
   return toBreitlingPrice(seed);
