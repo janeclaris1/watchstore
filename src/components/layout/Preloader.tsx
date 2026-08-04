@@ -1,80 +1,151 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { BrandLogo } from "@/components/layout/BrandLogo";
 
-export const PRELOADER_SESSION_KEY = "cosy-aura-preloader-seen";
-const MIN_MS = 1100;
+const MIN_INITIAL_MS = 1100;
+const MIN_NAV_MS = 700;
 const MAX_MS = 3200;
+const EXIT_MS = 480;
+
+function isSkippablePath(path: string | null | undefined) {
+  return !!path?.startsWith("/admin") || !!path?.startsWith("/maintenance");
+}
+
+function internalNavHref(event: MouseEvent): string | null {
+  if (event.defaultPrevented || event.button !== 0) return null;
+  if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
+    return null;
+  }
+
+  const anchor = (event.target as Element | null)?.closest?.("a");
+  if (!anchor) return null;
+
+  const href = anchor.getAttribute("href");
+  if (
+    !href ||
+    href.startsWith("#") ||
+    href.startsWith("mailto:") ||
+    href.startsWith("tel:")
+  ) {
+    return null;
+  }
+  if (anchor.target === "_blank" || anchor.hasAttribute("download")) return null;
+
+  let url: URL;
+  try {
+    url = new URL(href, window.location.href);
+  } catch {
+    return null;
+  }
+
+  if (url.origin !== window.location.origin) return null;
+  if (isSkippablePath(url.pathname)) return null;
+
+  const next = `${url.pathname}${url.search}`;
+  const current = `${window.location.pathname}${window.location.search}`;
+  if (next === current) return null;
+
+  return next;
+}
 
 export function Preloader() {
   const pathname = usePathname();
-  const skipRoute =
-    !!pathname?.startsWith("/admin") || !!pathname?.startsWith("/maintenance");
+  const skipRoute = isSkippablePath(pathname);
 
+  const [visible, setVisible] = useState(false);
   const [leaving, setLeaving] = useState(false);
-  const [gone, setGone] = useState(false);
 
+  const startedAt = useRef(0);
+  const minMs = useRef(MIN_INITIAL_MS);
+  const hideTimer = useRef<number | null>(null);
+  const failsafeTimer = useRef<number | null>(null);
+  const pathAtShow = useRef(pathname);
+
+  const clearTimers = () => {
+    if (hideTimer.current) window.clearTimeout(hideTimer.current);
+    if (failsafeTimer.current) window.clearTimeout(failsafeTimer.current);
+    hideTimer.current = null;
+    failsafeTimer.current = null;
+  };
+
+  const hide = () => {
+    const elapsed = Date.now() - startedAt.current;
+    const wait = Math.max(0, minMs.current - elapsed);
+
+    hideTimer.current = window.setTimeout(() => {
+      setLeaving(true);
+      hideTimer.current = window.setTimeout(() => {
+        setVisible(false);
+        setLeaving(false);
+      }, EXIT_MS);
+    }, wait);
+  };
+
+  const show = (duration: number) => {
+    clearTimers();
+    document.documentElement.classList.remove("preload-skip");
+    minMs.current = duration;
+    startedAt.current = Date.now();
+    pathAtShow.current = window.location.pathname;
+    setLeaving(false);
+    setVisible(true);
+    failsafeTimer.current = window.setTimeout(hide, MAX_MS);
+  };
+
+  // First paint / hard load
   useEffect(() => {
-    if (skipRoute) {
-      setGone(true);
-      return;
-    }
+    if (skipRoute) return;
 
-    try {
-      if (sessionStorage.getItem(PRELOADER_SESSION_KEY) === "1") {
-        setGone(true);
-        return;
-      }
-    } catch {
-      // ignore
-    }
+    show(MIN_INITIAL_MS);
 
-    const started = Date.now();
-    let finished = false;
-
-    const finish = () => {
-      if (finished) return;
-      finished = true;
-
-      const wait = Math.max(0, MIN_MS - (Date.now() - started));
-
-      window.setTimeout(() => {
-        setLeaving(true);
-        try {
-          sessionStorage.setItem(PRELOADER_SESSION_KEY, "1");
-        } catch {
-          // ignore
-        }
-        window.setTimeout(() => setGone(true), 520);
-      }, wait);
-    };
-
+    const onLoad = () => hide();
     if (document.readyState === "complete") {
-      finish();
+      hide();
     } else {
-      window.addEventListener("load", finish);
+      window.addEventListener("load", onLoad);
     }
-
-    const failsafe = window.setTimeout(finish, MAX_MS);
 
     return () => {
-      window.removeEventListener("load", finish);
-      window.clearTimeout(failsafe);
+      window.removeEventListener("load", onLoad);
+      clearTimers();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- initial mount only
   }, [skipRoute]);
 
+  // Internal link clicks
   useEffect(() => {
-    if (gone || skipRoute || leaving) return;
+    if (skipRoute) return;
+
+    const onClick = (event: MouseEvent) => {
+      if (!internalNavHref(event)) return;
+      show(MIN_NAV_MS);
+    };
+
+    document.addEventListener("click", onClick, true);
+    return () => document.removeEventListener("click", onClick, true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [skipRoute]);
+
+  // Hide once the App Router finishes navigating
+  useEffect(() => {
+    if (skipRoute || !visible || leaving) return;
+    if (pathname === pathAtShow.current) return;
+    hide();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathname, skipRoute, visible, leaving]);
+
+  useEffect(() => {
+    if (!visible || leaving || skipRoute) return;
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     return () => {
       document.body.style.overflow = prev;
     };
-  }, [gone, skipRoute, leaving]);
+  }, [visible, leaving, skipRoute]);
 
-  if (skipRoute || gone) return null;
+  if (skipRoute || !visible) return null;
 
   return (
     <div
@@ -87,20 +158,12 @@ export function Preloader() {
     >
       <div className="preloader__glow" aria-hidden="true" />
 
-      <div className="preloader__content relative flex flex-col items-center gap-8 px-6">
+      <div className="preloader__content relative flex flex-col items-center gap-10 px-6">
         <div className="preloader__logo">
-          <BrandLogo size="lg" />
+          <div className="preloader__logo-inner">
+            <BrandLogo size="lg" className="scale-[1.35] md:scale-[1.55]" />
+          </div>
         </div>
-
-        <div className="preloader__ring" aria-hidden="true">
-          <span className="preloader__hand preloader__hand--hour" />
-          <span className="preloader__hand preloader__hand--minute" />
-          <span className="preloader__pivot" />
-        </div>
-
-        <p className="preloader__tagline font-cantora text-[11px] tracking-[0.35em] uppercase text-wf-gray">
-          New luxury watches
-        </p>
 
         <div className="preloader__bar" aria-hidden="true">
           <span className="preloader__bar-fill" />

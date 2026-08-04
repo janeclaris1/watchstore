@@ -68,7 +68,7 @@ export default async function RootLayout({
         />
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var p=location.pathname||"";if(p.indexOf("/admin")===0||p.indexOf("/maintenance")===0){document.documentElement.classList.add("preload-skip");return;}if(sessionStorage.getItem("cosy-aura-preloader-seen")==="1"){document.documentElement.classList.add("preload-skip");}}catch(e){}})();`,
+            __html: `(function(){try{var p=location.pathname||"";if(p.indexOf("/admin")===0||p.indexOf("/maintenance")===0){document.documentElement.classList.add("preload-skip");}}catch(e){}})();`,
           }}
         />
       </head>

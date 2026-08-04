@@ -112,50 +112,8 @@ html.preload-skip .preloader {
   animation: preloader-rise 0.7s ease-out both;
 }
 
-.preloader__tagline {
-  animation: preloader-rise 0.7s ease-out 0.15s both;
-}
-
-.preloader__ring {
-  position: relative;
-  width: 52px;
-  height: 52px;
-  border: 1.5px solid #1a1a1a;
-  border-radius: 50%;
-  animation: preloader-rise 0.7s ease-out 0.08s both;
-}
-
-.preloader__hand {
-  position: absolute;
-  left: 50%;
-  bottom: 50%;
-  width: 1.5px;
-  background: #b8860b;
-  transform-origin: bottom center;
-  border-radius: 1px;
-}
-
-.preloader__hand--hour {
-  height: 12px;
-  margin-left: -0.75px;
-  animation: preloader-hour 3.2s linear infinite;
-}
-
-.preloader__hand--minute {
-  height: 16px;
-  margin-left: -0.75px;
-  animation: preloader-minute 1.2s linear infinite;
-}
-
-.preloader__pivot {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 5px;
-  height: 5px;
-  margin: -2.5px 0 0 -2.5px;
-  border-radius: 50%;
-  background: #1a1a1a;
+.preloader__logo-inner {
+  animation: preloader-breathe 2.2s ease-in-out 0.7s infinite;
 }
 
 .preloader__bar {
@@ -185,15 +143,15 @@ html.preload-skip .preloader {
   }
 }
 
-@keyframes preloader-hour {
-  to {
-    transform: rotate(360deg);
+@keyframes preloader-breathe {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
   }
-}
-
-@keyframes preloader-minute {
-  to {
-    transform: rotate(360deg);
+  50% {
+    opacity: 0.88;
+    transform: scale(1.03);
   }
 }
 
@@ -208,11 +166,8 @@ html.preload-skip .preloader {
 
 @media (prefers-reduced-motion: reduce) {
   .preloader__logo,
-  .preloader__tagline,
-  .preloader__ring,
+  .preloader__logo-inner,
   .preloader__bar,
-  .preloader__hand--hour,
-  .preloader__hand--minute,
   .preloader__bar-fill {
     animation: none !important;
   }
