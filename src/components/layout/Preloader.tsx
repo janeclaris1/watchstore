@@ -2,12 +2,11 @@
 
 import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
-import { BrandLogo } from "@/components/layout/BrandLogo";
 
-const MIN_INITIAL_MS = 1100;
-const MIN_NAV_MS = 700;
+const MIN_INITIAL_MS = 600;
+const MIN_NAV_MS = 450;
 const MAX_MS = 3200;
-const EXIT_MS = 480;
+const EXIT_MS = 280;
 
 function isSkippablePath(path: string | null | undefined) {
   return !!path?.startsWith("/admin") || !!path?.startsWith("/maintenance");
@@ -48,6 +47,44 @@ function internalNavHref(event: MouseEvent): string | null {
   if (next === current) return null;
 
   return next;
+}
+
+function LogoSpinner({ size = 36 }: { size?: number }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 64 64"
+      className="preloader__mark"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <rect x="22" y="2" width="20" height="10" rx="2.5" />
+      <rect x="22" y="52" width="20" height="10" rx="2.5" />
+      <path d="M20 12h8l-3 7h-5z" />
+      <path d="M36 12h8v7h-5l-3-7z" />
+      <path d="M20 45h5l3 7h-8z" />
+      <path d="M39 45h5v7h-8l3-7z" />
+      <circle cx="32" cy="32" r="18" />
+      <rect x="49" y="27" width="5" height="10" rx="1.5" />
+      <circle cx="32" cy="32" r="12" fill="#fff" />
+      <path
+        d="M32 32l-6-8"
+        stroke="#1A1A1A"
+        strokeWidth="2.2"
+        strokeLinecap="round"
+        fill="none"
+      />
+      <path
+        d="M32 32l7-3"
+        stroke="#1A1A1A"
+        strokeWidth="2.8"
+        strokeLinecap="round"
+        fill="none"
+      />
+      <circle cx="32" cy="32" r="2" fill="#1A1A1A" />
+    </svg>
+  );
 }
 
 export function Preloader() {
@@ -94,7 +131,6 @@ export function Preloader() {
     failsafeTimer.current = window.setTimeout(hide, MAX_MS);
   };
 
-  // First paint / hard load
   useEffect(() => {
     if (skipRoute) return;
 
@@ -114,7 +150,6 @@ export function Preloader() {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- initial mount only
   }, [skipRoute]);
 
-  // Internal link clicks
   useEffect(() => {
     if (skipRoute) return;
 
@@ -128,7 +163,6 @@ export function Preloader() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [skipRoute]);
 
-  // Hide once the App Router finishes navigating
   useEffect(() => {
     if (skipRoute || !visible || leaving) return;
     if (pathname === pathAtShow.current) return;
@@ -136,38 +170,17 @@ export function Preloader() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname, skipRoute, visible, leaving]);
 
-  useEffect(() => {
-    if (!visible || leaving || skipRoute) return;
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = prev;
-    };
-  }, [visible, leaving, skipRoute]);
-
   if (skipRoute || !visible) return null;
 
   return (
     <div
-      className={`preloader fixed inset-0 z-[300] flex flex-col items-center justify-center bg-white ${
-        leaving ? "preloader--leave" : ""
-      }`}
+      className={`preloader ${leaving ? "preloader--leave" : ""}`}
       role="status"
       aria-live="polite"
-      aria-label="Loading COSY AURA WATCH STORE"
+      aria-label="Loading"
     >
-      <div className="preloader__glow" aria-hidden="true" />
-
-      <div className="preloader__content relative flex flex-col items-center gap-10 px-6">
-        <div className="preloader__logo">
-          <div className="preloader__logo-inner">
-            <BrandLogo size="lg" className="scale-[1.35] md:scale-[1.55]" />
-          </div>
-        </div>
-
-        <div className="preloader__bar" aria-hidden="true">
-          <span className="preloader__bar-fill" />
-        </div>
+      <div className="preloader__spinner" aria-hidden="true">
+        <LogoSpinner />
       </div>
     </div>
   );
