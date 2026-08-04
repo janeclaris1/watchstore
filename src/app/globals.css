@@ -8,19 +8,19 @@
   }
 
   body {
-    @apply bg-white text-wf-black font-inter antialiased;
+    @apply bg-white text-wf-black font-cantora antialiased;
   }
 }
 
 @layer components {
   .btn-gold {
-    @apply bg-gold text-white px-6 py-3 rounded font-inter font-medium
+    @apply bg-gold text-white px-6 py-3 rounded font-cantora font-medium
            transition-all duration-200 hover:bg-gold-light hover:scale-[1.02]
            active:scale-[0.98];
   }
 
   .btn-outline {
-    @apply border border-wf-border text-wf-black px-6 py-3 rounded font-inter
+    @apply border border-wf-border text-wf-black px-6 py-3 rounded font-cantora
            transition-all duration-200 hover:border-gold hover:text-gold;
   }
 

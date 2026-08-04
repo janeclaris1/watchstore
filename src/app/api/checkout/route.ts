@@ -125,6 +125,15 @@ export async function POST(req: Request) {
       ui_mode: "embedded",
       mode: "payment",
       line_items: lineItems,
+      consent_collection: {
+        terms_of_service: "required",
+      },
+      custom_text: {
+        terms_of_service_acceptance: {
+          message:
+            "By placing this order, you agree to our Terms and Conditions, including shipping and returns terms.",
+        },
+      },
       // Full Checkout form: email, shipping address, shipping method, payment
       billing_address_collection: "auto",
       shipping_address_collection: {

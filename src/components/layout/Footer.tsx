@@ -20,6 +20,7 @@ const SUPPORT_LINKS = [
   { label: "Shipping", href: "/shipping" },
   { label: "Returns", href: "/returns" },
   { label: "Privacy Policy", href: "/privacy" },
+  { label: "Terms & Conditions", href: "/terms" },
   { label: "Contact", href: "/contact" },
 ];
 

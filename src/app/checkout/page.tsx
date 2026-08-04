@@ -141,6 +141,11 @@ export default function CheckoutPage() {
       {/* Right: full Stripe Checkout embed (email, address, shipping, pay) */}
       <section className="bg-white order-1 lg:order-2">
         <div className="max-w-lg mx-auto lg:mr-auto lg:ml-0 px-4 sm:px-6 py-8 lg:py-12 lg:pl-12 lg:pr-8">
+          <p className="text-xs text-wf-gray mb-4">
+            You will be asked to accept our terms at the final payment step before
+            your order is submitted.
+          </p>
+
           {loading && (
             <p className="text-sm text-wf-gray py-20 text-center">
               Loading secure checkout…

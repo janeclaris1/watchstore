@@ -21,8 +21,8 @@ const config: Config = {
         },
       },
       fontFamily: {
-        playfair: ["var(--font-playfair)", "serif"],
-        inter: ["var(--font-inter)", "system-ui", "sans-serif"],
+        playfair: ["var(--font-cantora)", "sans-serif"],
+        inter: ["var(--font-cantora)", "sans-serif"],
         cantora: ["var(--font-cantora)", "sans-serif"],
       },
       animation: {

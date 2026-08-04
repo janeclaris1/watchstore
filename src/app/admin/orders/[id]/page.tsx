@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { formatPrice } from "@/lib/utils";
 import { getShippingMethod } from "@/lib/shipping";
 import { OrderStatusSelect } from "@/components/admin/OrderStatusSelect";
+import { ResendOrderEmailButton } from "@/components/admin/ResendOrderEmailButton";
 
 export default async function AdminOrderDetailPage({
   params,
@@ -195,6 +196,14 @@ export default async function AdminOrderDetailPage({
                 <dt className="text-wf-gray">Status</dt>
                 <dd>{order.status}</dd>
               </div>
+              <div>
+                <dt className="text-wf-gray">Confirmation email</dt>
+                <dd>
+                  {order.confirmationEmailedAt
+                    ? `Sent ${new Date(order.confirmationEmailedAt).toLocaleString()}`
+                    : "Not sent yet"}
+                </dd>
+              </div>
               {order.stripeSessionId && (
                 <div>
                   <dt className="text-wf-gray">Stripe session</dt>
@@ -212,6 +221,11 @@ export default async function AdminOrderDetailPage({
                 </div>
               )}
             </dl>
+            {order.status !== "PENDING" && (
+              <div className="mt-4 pt-4 border-t border-wf-border">
+                <ResendOrderEmailButton orderId={order.id} />
+              </div>
+            )}
           </section>
         </div>
       </div>

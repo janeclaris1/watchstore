@@ -38,8 +38,14 @@ export async function sendEmail({
   const apiKey = process.env.RESEND_API_KEY;
 
   if (!apiKey) {
-    console.log("[email:dev]", { to, subject, html: html.slice(0, 200) });
-    return { ok: true };
+    // Never pretend mail was sent — that previously marked orders as emailed
+    // on production when RESEND_API_KEY was missing.
+    if (process.env.EMAIL_DEV_LOG === "true") {
+      console.log("[email:dev]", { to, subject, html: html.slice(0, 200) });
+      return { ok: true };
+    }
+    console.error("[email] RESEND_API_KEY is not configured");
+    return { ok: false, error: "RESEND_API_KEY is not configured" };
   }
 
   try {
@@ -52,10 +58,16 @@ export async function sendEmail({
       body: JSON.stringify({ from: FROM_EMAIL, to: [to], subject, html }),
     });
 
+    const bodyText = await res.text();
     if (!res.ok) {
-      const err = await res.text();
-      console.error("[email] Resend failed:", err);
-      return { ok: false, error: err.slice(0, 300) };
+      console.error("[email] Resend failed:", bodyText);
+      return { ok: false, error: bodyText.slice(0, 300) };
+    }
+    try {
+      const parsed = JSON.parse(bodyText) as { id?: string };
+      if (parsed.id) console.log("[email] Resend accepted:", parsed.id, "→", to);
+    } catch {
+      /* ignore */
     }
     return { ok: true };
   } catch (error) {

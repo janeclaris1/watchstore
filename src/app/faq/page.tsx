@@ -1,10 +1,8 @@
 import type { Metadata } from "next";
-import {
-  ContentCta,
-  ContentPage,
-  ContentSection,
-} from "@/components/content/ContentPage";
+import Link from "next/link";
 import { FaqAccordion } from "@/components/content/FaqAccordion";
+import { FaqTopicCards } from "@/components/faq/FaqTopicCards";
+import { getFaqGalleryImages } from "@/lib/faq-gallery";
 
 export const metadata: Metadata = {
   title: "FAQ",
@@ -12,61 +10,135 @@ export const metadata: Metadata = {
     "Answers to common questions about ordering, shipping, and returns at COSY AURA WATCH STORE.",
 };
 
-const FAQS = [
+const FAQ_GROUPS = [
   {
-    question: "Are your watches brand new?",
-    answer:
-      "Yes. Every watch we sell is brand new and sourced through trusted supply channels. We do not sell pre-owned timepieces.",
+    id: "buying",
+    title: "Purchasing A Watch",
+    cta: "Discover More",
+    faqs: [
+      {
+        question: "Are your watches brand new?",
+        answer:
+          "Yes. Every watch we sell is brand new and sourced through trusted supply channels. We do not sell pre-owned timepieces.",
+      },
+      {
+        question: "Can I reserve a watch?",
+        answer:
+          "Watches are sold on a first-come, first-served basis. Adding an item to your cart does not reserve it. Complete checkout to secure your purchase.",
+      },
+    ],
   },
   {
-    question: "When will my watch ship?",
-    answer:
-      "Your order is prepared after payment confirmation. Most orders dispatch within 1–3 business days. Choose Aramex, FedEx, or DHL Express at checkout.",
+    id: "shipping",
+    title: "Delivery And Tracking",
+    cta: "Discover More",
+    faqs: [
+      {
+        question: "When will my watch ship?",
+        answer:
+          "Your order is prepared after payment confirmation. Most orders dispatch within 1 to 3 business days. Choose Aramex, FedEx, or DHL Express at checkout.",
+      },
+      {
+        question: "Do you ship internationally?",
+        answer:
+          "We ship worldwide with Aramex, FedEx, and DHL Express. Courier options, live prices, and estimated times appear at checkout for your country.",
+      },
+      {
+        question: "How do I track my order?",
+        answer:
+          "Once your watch ships, you will receive a confirmation email with tracking details. You can also contact support with your order number.",
+      },
+    ],
   },
   {
-    question: "What payment methods do you accept?",
-    answer:
-      "We accept major credit and debit cards via Stripe secure checkout, including Visa, Mastercard, and American Express.",
-  },
-  {
-    question: "What is your returns policy?",
-    answer:
-      "You may return an eligible watch within 14 days of delivery for a full refund, provided it is unused and in original packaging. See our Returns page for details.",
-  },
-  {
-    question: "Can I reserve a watch?",
-    answer:
-      "Watches are sold on a first-come, first-served basis. Adding an item to your cart does not reserve it - complete checkout to secure your purchase.",
-  },
-  {
-    question: "Do you ship internationally?",
-    answer:
-      "We ship worldwide with Aramex, FedEx, and DHL Express. Courier options, live prices, and estimated times appear at checkout for your country.",
-  },
-  {
-    question: "How do I track my order?",
-    answer:
-      "Once your watch ships, you will receive a confirmation email with tracking details. You can also contact support with your order number.",
+    id: "payment",
+    title: "Payment And Returns",
+    cta: "Discover More",
+    faqs: [
+      {
+        question: "What payment methods do you accept?",
+        answer:
+          "We accept major credit and debit cards via Stripe secure checkout, including Visa, Mastercard, and American Express.",
+      },
+      {
+        question: "What is your returns policy?",
+        answer:
+          "You may return an eligible watch within 14 days of delivery for a full refund, provided it is unused and in original packaging. See our Returns page for details.",
+      },
+    ],
   },
 ];
 
-export default function FaqPage() {
+export default async function FaqPage() {
+  const galleryImages = await getFaqGalleryImages();
+
   return (
-    <ContentPage
-      title="Frequently Asked Questions"
-      subtitle="Quick answers about shopping, delivery, returns, and care for your new luxury watch."
-    >
-      <ContentSection>
-        <FaqAccordion items={FAQS} />
-      </ContentSection>
-      <p className="text-sm text-wf-gray mt-8">
-        Still need help?{" "}
-        <a href="/contact" className="text-gold hover:text-gold-light">
-          Contact our team
-        </a>
-        .
-      </p>
-      <ContentCta />
-    </ContentPage>
+    <div id="top" className="font-cantora">
+      <section className="relative overflow-hidden border-b border-wf-border bg-gradient-to-br from-wf-light via-white to-[#f3eee4]">
+        <div
+          className="pointer-events-none absolute inset-0 opacity-[0.35]"
+          style={{
+            backgroundImage:
+              "radial-gradient(circle at 1px 1px, rgba(184,134,11,0.18) 1px, transparent 0)",
+            backgroundSize: "28px 28px",
+          }}
+          aria-hidden
+        />
+        <div className="relative max-w-6xl mx-auto px-4 py-16 md:py-24">
+          <p className="text-xs uppercase tracking-[0.25em] text-gold mb-4 animate-fade-up">
+            COSY AURA WATCH STORE
+          </p>
+          <h1 className="text-4xl md:text-6xl text-wf-black mb-5 max-w-3xl animate-fade-up [animation-delay:80ms]">
+            Frequently Asked Questions
+          </h1>
+          <p className="text-wf-gray text-base md:text-lg leading-relaxed max-w-xl animate-fade-up [animation-delay:160ms]">
+            Find quick answers on buying, payments, shipping, delivery, and returns.
+          </p>
+        </div>
+      </section>
+
+      <section className="max-w-6xl mx-auto px-4 py-14 md:py-20">
+        <FaqTopicCards
+          topics={FAQ_GROUPS.map(({ id, title, cta }) => ({ id, title, cta }))}
+          imagePool={galleryImages}
+        />
+      </section>
+
+      <section className="max-w-5xl mx-auto px-4 pb-16 md:pb-20 space-y-14">
+        {FAQ_GROUPS.map((group) => (
+          <div key={group.id} id={group.id} className="scroll-mt-28">
+            <div className="flex items-center justify-between mb-4 gap-4">
+              <h3 className="text-3xl text-wf-black">{group.title}</h3>
+              <a
+                href="#top"
+                className="text-xs uppercase tracking-[0.2em] text-wf-gray hover:text-gold"
+              >
+                Back To Top
+              </a>
+            </div>
+            <FaqAccordion items={group.faqs} />
+          </div>
+        ))}
+      </section>
+
+      <section className="border-t border-wf-border bg-wf-light">
+        <div className="max-w-5xl mx-auto px-4 py-14 md:py-16 flex flex-col sm:flex-row items-center justify-between gap-6">
+          <div>
+            <h2 className="text-3xl text-wf-black mb-2">Still need help?</h2>
+            <p className="text-sm text-wf-gray">
+              Our team can help with product details, delivery timing, and order support.
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-3 shrink-0">
+            <Link href="/contact" className="btn-gold">
+              Contact Us
+            </Link>
+            <Link href="/watches" className="btn-outline">
+              Browse Watches
+            </Link>
+          </div>
+        </div>
+      </section>
+    </div>
   );
 }
