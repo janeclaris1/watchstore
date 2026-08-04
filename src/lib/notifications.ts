@@ -6,7 +6,7 @@ const FROM_EMAIL =
 const ADMIN_EMAIL =
   process.env.ADMIN_NOTIFICATION_EMAIL ||
   process.env.ADMIN_EMAIL ||
-  "admin@cosyaurawatchstore.com";
+  "admin@cosyaura.us";
 const SITE_URL = process.env.NEXTAUTH_URL || "http://localhost:3000";
 
 type OrderWithItems = {

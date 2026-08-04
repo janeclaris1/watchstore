@@ -54,7 +54,7 @@ Visit [http://localhost:3000](http://localhost:3000).
 ### Admin Panel
 
 - URL: [http://localhost:3000/admin](http://localhost:3000/admin)
-- Default credentials: `admin@cosyaurawatchstore.com` / `admin123`
+- Default credentials: `admin@cosyaura.us` / `admin123`
 
 ## Features
 
