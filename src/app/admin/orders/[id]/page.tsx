@@ -53,11 +53,7 @@ export default async function AdminOrderDetailPage({
         </div>
         <div className="flex items-center gap-3">
           <span className="text-sm text-wf-gray">Status</span>
-          <OrderStatusSelect
-            orderId={order.id}
-            status={order.status}
-            redirectTo={`/admin/orders/${order.id}`}
-          />
+          <OrderStatusSelect orderId={order.id} status={order.status} />
         </div>
       </div>
 

@@ -23,17 +23,13 @@ export async function POST(
 
   const contentType = req.headers.get("content-type") || "";
   let status: string | null = null;
-  let redirectTo = "/admin/orders";
 
   if (contentType.includes("application/json")) {
     const body = await req.json();
     status = body.status;
-    if (body.redirectTo) redirectTo = body.redirectTo;
   } else {
     const formData = await req.formData();
     status = formData.get("status") as string;
-    const next = formData.get("redirectTo");
-    if (typeof next === "string" && next) redirectTo = next;
   }
 
   if (!status || !VALID_STATUSES.includes(status as OrderStatus)) {
@@ -54,9 +50,5 @@ export async function POST(
     await notifyOrderStatusChange(updated.id, updated.status);
   }
 
-  if (contentType.includes("application/json")) {
-    return NextResponse.json(updated);
-  }
-
-  return NextResponse.redirect(new URL(redirectTo, req.url));
+  return NextResponse.json(updated);
 }
