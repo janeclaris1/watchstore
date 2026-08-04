@@ -22,7 +22,7 @@ export default function PrivacyPage() {
       <ContentSection title="1. Who controls your information">
         <p>
           COSY AURA WATCH STORE controls the personal information collected
-          through this website. References to "we", "our", and "us" in this
+          through this website. References to “we”, “our”, and “us” in this
           policy mean COSY AURA WATCH STORE.
         </p>
         <p>

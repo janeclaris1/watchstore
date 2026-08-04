@@ -131,7 +131,7 @@ export default function TermsPage() {
 
       <ContentSection title="9. Disclaimer of warranties">
         <p>
-          This website and all services are provided on an "as is" and "as available"
+          This website and all services are provided on an “as is” and “as available”
           basis to the maximum extent permitted by law. We disclaim all warranties,
           express or implied, including implied warranties of merchantability, fitness
           for a particular purpose, and non-infringement.
