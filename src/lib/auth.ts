@@ -8,7 +8,7 @@ export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma) as NextAuthOptions["adapter"],
   session: { strategy: "jwt" },
   pages: {
-    signIn: "/admin/login",
+    signIn: "/account/login",
   },
   providers: [
     CredentialsProvider({
@@ -16,12 +16,14 @@ export const authOptions: NextAuthOptions = {
       credentials: {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
+        portal: { label: "Portal", type: "text" },
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null;
 
+        const email = credentials.email.trim().toLowerCase();
         const user = await prisma.user.findUnique({
-          where: { email: credentials.email },
+          where: { email },
         });
 
         if (!user || !user.password) return null;
@@ -31,7 +33,11 @@ export const authOptions: NextAuthOptions = {
           user.password
         );
         if (!isValid) return null;
-        if (user.role !== "ADMIN") return null;
+
+        // Admin login form must only accept ADMIN users
+        if (credentials.portal === "admin" && user.role !== "ADMIN") {
+          return null;
+        }
 
         return {
           id: user.id,

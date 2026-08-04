@@ -19,6 +19,7 @@ export default function AdminLoginPage() {
     const result = await signIn("credentials", {
       email,
       password,
+      portal: "admin",
       redirect: false,
     });
 
