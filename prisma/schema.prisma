@@ -213,6 +213,10 @@ model Order {
   shippingCity     String?
   shippingPostcode String?
   shippingCountry  String?
+  trackingNumber   String?
+  trackingUrl      String?
+  carrier          String?
+  shippedAt        DateTime?
   confirmationEmailedAt DateTime?
   createdAt        DateTime    @default(now())
   updatedAt        DateTime    @updatedAt
@@ -223,6 +227,7 @@ model Order {
   @@index([userId])
   @@index([status])
   @@index([createdAt])
+  @@index([email])
 }
 
 model OrderItem {

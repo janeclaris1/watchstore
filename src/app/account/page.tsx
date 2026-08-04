@@ -66,6 +66,12 @@ export default async function AccountPage() {
                   </Link>
                 )}
                 <Link
+                  href="/track"
+                  className="btn-outline w-full text-center block text-sm"
+                >
+                  Track an order
+                </Link>
+                <Link
                   href="/wishlist"
                   className="btn-outline w-full text-center block text-sm"
                 >
@@ -112,9 +118,17 @@ export default async function AccountPage() {
                           .join(", ")}
                       </p>
                     </div>
-                    <div className="text-sm sm:text-right">
+                    <div className="text-sm sm:text-right space-y-1">
                       <p>{formatPrice(order.total)}</p>
                       <p className="text-wf-gray">{order.status}</p>
+                      <Link
+                        href={`/track?ref=${order.id.slice(0, 8).toUpperCase()}&email=${encodeURIComponent(
+                          session.user.email
+                        )}`}
+                        className="text-gold hover:underline"
+                      >
+                        Track order
+                      </Link>
                     </div>
                   </li>
                 ))}

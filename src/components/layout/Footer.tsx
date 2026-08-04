@@ -16,6 +16,7 @@ const SHOP_LINKS = [
 ];
 
 const SUPPORT_LINKS = [
+  { label: "Track Order", href: "/track" },
   { label: "FAQ", href: "/faq" },
   { label: "Shipping", href: "/shipping" },
   { label: "Returns", href: "/returns" },

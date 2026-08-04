@@ -1,5 +1,6 @@
 import { prisma } from "./prisma";
 import { formatPrice } from "./utils";
+import { resolveTrackingUrl } from "./order-tracking";
 
 const FROM_EMAIL = normalizeFromEmail(
   process.env.EMAIL_FROM || "COSY AURA WATCH STORE <onboarding@resend.dev>"
@@ -181,7 +182,10 @@ export async function notifyOrderPaid(
        <p>Order reference: <strong>#${shortId}</strong></p>
        <p>Total: <strong>${formatPrice(order.total)}</strong></p>
        <table style="width:100%;border-collapse:collapse;">${orderItemsHtml(order)}</table>
-       <p style="margin-top:16px;">You'll receive another email when your order ships.</p>`
+       <p style="margin-top:16px;">You'll receive another email when your order ships.</p>
+       <p style="margin-top:8px;"><a href="${SITE_URL}/track?ref=${shortId}&email=${encodeURIComponent(
+         order.email
+       )}" style="color:#B8860B;">Track your order</a></p>`
     ),
   });
 
@@ -220,7 +224,22 @@ export async function notifyOrderStatusChange(
     },
     SHIPPED: {
       subject: `Order #${shortId} has shipped`,
-      body: `<p>Great news - your watch is on its way. Track updates will follow if provided by the carrier.</p>`,
+      body: `<p>Great news - your watch is on its way.</p>
+        ${
+          order.trackingNumber
+            ? `<p>Tracking number: <strong>${order.trackingNumber}</strong>${
+                order.carrier ? ` (${order.carrier})` : ""
+              }</p>`
+            : ""
+        }
+        ${
+          resolveTrackingUrl(order)
+            ? `<p><a href="${resolveTrackingUrl(order)}" style="color:#B8860B;">Track with carrier</a></p>`
+            : ""
+        }
+        <p><a href="${SITE_URL}/track?ref=${shortId}&email=${encodeURIComponent(
+          order.email
+        )}" style="color:#B8860B;">View order status</a></p>`,
     },
     DELIVERED: {
       subject: `Order #${shortId} delivered`,

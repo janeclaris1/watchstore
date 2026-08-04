@@ -7,6 +7,8 @@ import { formatPrice } from "@/lib/utils";
 import { getShippingMethod } from "@/lib/shipping";
 import { OrderStatusSelect } from "@/components/admin/OrderStatusSelect";
 import { ResendOrderEmailButton } from "@/components/admin/ResendOrderEmailButton";
+import { OrderTrackingForm } from "@/components/admin/OrderTrackingForm";
+import { resolveTrackingUrl } from "@/lib/order-tracking";
 
 export default async function AdminOrderDetailPage({
   params,
@@ -160,7 +162,7 @@ export default async function AdminOrderDetailPage({
               </p>
             )}
             {order.shippingName || order.shippingAddress ? (
-              <address className="text-sm not-italic leading-relaxed text-wf-gray">
+              <address className="text-sm not-italic leading-relaxed text-wf-gray mb-4">
                 {order.shippingName && (
                   <span className="block text-wf-black font-medium">
                     {order.shippingName}
@@ -179,10 +181,46 @@ export default async function AdminOrderDetailPage({
                 )}
               </address>
             ) : (
-              <p className="text-sm text-wf-gray">
+              <p className="text-sm text-wf-gray mb-4">
                 Shipping details appear after Stripe checkout completes.
               </p>
             )}
+
+            {(order.trackingNumber || resolveTrackingUrl(order)) && (
+              <div className="text-sm mb-4 pb-4 border-b border-wf-border space-y-1">
+                {order.carrier && (
+                  <p>
+                    <span className="text-wf-gray">Carrier: </span>
+                    {order.carrier}
+                  </p>
+                )}
+                {order.trackingNumber && (
+                  <p>
+                    <span className="text-wf-gray">Tracking #: </span>
+                    <span className="font-mono">{order.trackingNumber}</span>
+                  </p>
+                )}
+                {resolveTrackingUrl(order) && (
+                  <a
+                    href={resolveTrackingUrl(order)!}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-gold hover:underline"
+                  >
+                    Open tracking link
+                  </a>
+                )}
+              </div>
+            )}
+
+            <h3 className="text-sm font-medium mb-3">Update tracking</h3>
+            <OrderTrackingForm
+              orderId={order.id}
+              trackingNumber={order.trackingNumber}
+              trackingUrl={order.trackingUrl}
+              carrier={order.carrier}
+              status={order.status}
+            />
           </section>
 
           <section className="bg-white border border-wf-border rounded-lg p-6">

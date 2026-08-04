@@ -46,7 +46,7 @@ const FAQ_GROUPS = [
       {
         question: "How do I track my order?",
         answer:
-          "Once your watch ships, you will receive a confirmation email with tracking details. You can also contact support with your order number.",
+          "Use Track Order in the footer or visit /track with your 8-character order number and checkout email. When your order ships, you will also receive an email with carrier tracking details.",
       },
     ],
   },
