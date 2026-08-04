@@ -1,13 +1,24 @@
 import { prisma } from "./prisma";
 import { formatPrice } from "./utils";
 
-const FROM_EMAIL =
-  process.env.EMAIL_FROM || "COSY AURA WATCH STORE <onboarding@resend.dev>";
+const FROM_EMAIL = normalizeFromEmail(
+  process.env.EMAIL_FROM || "COSY AURA WATCH STORE <onboarding@resend.dev>"
+);
 const ADMIN_EMAIL =
   process.env.ADMIN_NOTIFICATION_EMAIL ||
   process.env.ADMIN_EMAIL ||
   "admin@cosyaura.us";
-const SITE_URL = process.env.NEXTAUTH_URL || "http://localhost:3000";
+const SITE_URL =
+  process.env.NEXT_PUBLIC_SITE_URL ||
+  process.env.NEXTAUTH_URL ||
+  "http://localhost:3000";
+const PLACEHOLDER_CHECKOUT_EMAIL = "pending@checkout.cosyaura.us";
+
+/** Resend rejects `Name<email>` — require `Name <email>`. */
+function normalizeFromEmail(raw: string): string {
+  const trimmed = raw.trim();
+  return trimmed.replace(/([^\s<])</, "$1 <");
+}
 
 type OrderWithItems = {
   id: string;
@@ -126,6 +137,17 @@ export async function notifyOrderPaid(
     },
   });
   if (!order) return { ok: false, error: "Order not found" };
+
+  if (
+    !order.email ||
+    order.email === PLACEHOLDER_CHECKOUT_EMAIL ||
+    !order.email.includes("@")
+  ) {
+    return {
+      ok: false,
+      error: "Order has no real customer email yet",
+    };
+  }
 
   const shortId = order.id.slice(0, 8).toUpperCase();
   const adminLink = `${SITE_URL}/admin/orders/${order.id}`;

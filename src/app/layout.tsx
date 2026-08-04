@@ -5,6 +5,7 @@ import "./globals.css";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { CookieConsent } from "@/components/layout/CookieConsent";
+import { Preloader } from "@/components/layout/Preloader";
 import { CartDrawer } from "@/components/cart/CartDrawer";
 import { NewsletterPopup } from "@/components/home/NewsletterPopup";
 import { Providers } from "@/components/Providers";
@@ -65,6 +66,11 @@ export default async function RootLayout({
           name="google-site-verification"
           content="haMsw6zpccbx1gi_9riec7AZ1j7zJVRM1VntR7oY9HA"
         />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var p=location.pathname||"";if(p.indexOf("/admin")===0||p.indexOf("/maintenance")===0){document.documentElement.classList.add("preload-skip");return;}if(sessionStorage.getItem("cosy-aura-preloader-seen")==="1"){document.documentElement.classList.add("preload-skip");}}catch(e){}})();`,
+          }}
+        />
       </head>
       <body>
         <Providers>
@@ -72,6 +78,7 @@ export default async function RootLayout({
             children
           ) : (
             <>
+              <Preloader />
               <Header />
               <main className="min-h-screen">{children}</main>
               <Footer />
