@@ -102,6 +102,12 @@ const BRANDS = [
     width: 110,
   },
   {
+    name: "Citizen",
+    slug: "citizen",
+    logo: `/images/brands/citizen.svg?v=${LOGO_VERSION}`,
+    width: 120,
+  },
+  {
     name: "Vacheron Constantin",
     slug: "vacheron-constantin",
     logo: `/images/brands/vacheron-constantin.svg?v=${LOGO_VERSION}`,

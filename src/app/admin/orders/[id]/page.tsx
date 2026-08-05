@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { requireAdminPage } from "@/lib/admin";
 import { prisma } from "@/lib/prisma";
 import { formatPrice } from "@/lib/utils";
-import { getShippingMethod } from "@/lib/shipping";
+import { resolveShippingMethodLabel } from "@/lib/shipping-methods";
 import { OrderStatusSelect } from "@/components/admin/OrderStatusSelect";
 import { ResendOrderEmailButton } from "@/components/admin/ResendOrderEmailButton";
 import { OrderTrackingForm } from "@/components/admin/OrderTrackingForm";
@@ -35,6 +35,8 @@ export default async function AdminOrderDetailPage({
   });
 
   if (!order) notFound();
+
+  const shippingLabel = await resolveShippingMethodLabel(order.shippingMethod);
 
   return (
     <div>
@@ -105,9 +107,7 @@ export default async function AdminOrderDetailPage({
               <div className="flex justify-between">
                 <span className="text-wf-gray">
                   Shipping
-                  {order.shippingMethod
-                    ? ` (${getShippingMethod(order.shippingMethod)?.name ?? order.shippingMethod})`
-                    : ""}
+                  {order.shippingMethod ? ` (${shippingLabel})` : ""}
                 </span>
                 <span>
                   {(order.shippingCost ?? 0) === 0
@@ -154,7 +154,7 @@ export default async function AdminOrderDetailPage({
             {order.shippingMethod && (
               <p className="text-sm mb-3">
                 <span className="text-wf-gray">Method: </span>
-                {getShippingMethod(order.shippingMethod)?.name ?? order.shippingMethod}
+                {shippingLabel}
                 {" · "}
                 {(order.shippingCost ?? 0) === 0
                   ? "Free"

@@ -24,12 +24,18 @@ import {
   fetchMayorsJacobCoProducts,
 } from "../src/lib/mayors";
 import {
+  downloadCitizenImages,
+  fetchCitizenMensCollection,
+} from "../src/lib/citizen";
+import { seedDefaultShippingMethods } from "../src/lib/shipping-methods";
+import {
   toBreitlingPrice,
   toDaytonaPrice,
   toJacobCoPrice,
   toStorefrontPrice,
   toTissotPrice,
   toHalfListedPrice,
+  toSeventyPercentPrice,
   toVacheronPrice,
 } from "../src/lib/utils";
 
@@ -52,6 +58,7 @@ const brands = [
   { name: "Jacob & Co", slug: "jacob-co", logo: "/images/brands/jacob-co.svg" },
   { name: "Tissot", slug: "tissot", logo: "/images/brands/tissot.svg" },
   { name: "Timex", slug: "timex", logo: "/images/brands/timex.svg" },
+  { name: "Citizen", slug: "citizen", logo: "/images/brands/citizen.svg" },
   {
     name: "Vacheron Constantin",
     slug: "vacheron-constantin",
@@ -956,6 +963,102 @@ async function seedTissotFromWatchesOfSwitzerland() {
   console.log(`Imported ${imported} Tissot watches from Watches of Switzerland.`);
 }
 
+async function seedCitizenFromCitizenWatch() {
+  const brand = await prisma.brand.findUnique({ where: { slug: "citizen" } });
+  if (!brand) {
+    console.warn("Citizen brand not found");
+    return;
+  }
+
+  console.log("Fetching Citizen men's collection from citizenwatch.com...");
+  const products = await fetchCitizenMensCollection();
+
+  if (products.length === 0) {
+    console.warn("No Citizen products found");
+    return;
+  }
+
+  await deleteWatchesByImagePrefix(brand.id, "/images/watches/citizen/");
+
+  let imported = 0;
+  for (const product of products) {
+    const series = await prisma.series.upsert({
+      where: {
+        brandId_slug: {
+          brandId: brand.id,
+          slug: slugify(product.series),
+        },
+      },
+      update: { name: product.series },
+      create: {
+        brandId: brand.id,
+        name: product.series,
+        slug: slugify(product.series),
+      },
+    });
+
+    let imagePaths: string[];
+    try {
+      imagePaths = await downloadCitizenImages(product);
+    } catch (error) {
+      console.warn(
+        `  skip ${product.reference || product.sku}: ${
+          error instanceof Error ? error.message : error
+        }`
+      );
+      continue;
+    }
+
+    const watchSlug = slugify(`citizen-${product.series}-${product.sku}`);
+    const price = toSeventyPercentPrice(product.originalPrice);
+
+    await prisma.watch.create({
+      data: {
+        slug: watchSlug,
+        brandId: brand.id,
+        seriesId: series.id,
+        model: product.title,
+        reference: product.reference,
+        description:
+          product.description +
+          ` Listed at ${price.toFixed(2)} USD (70% of $${product.originalPrice.toFixed(2)} MSRP).`,
+        conditionReport: "New condition. Full details available on request.",
+        price,
+        condition: "UNWORN",
+        year: product.year,
+        movement: product.movement,
+        caseMaterial: product.caseMaterial,
+        caseSize: product.caseSize ?? "40mm",
+        strapMaterial: product.strapMaterial,
+        dial: product.dial ?? "Black",
+        waterResistance: product.waterResistance ?? "50m",
+        gender: product.gender,
+        hasBox: true,
+        hasPapers: true,
+        featured: imported < 12,
+        category: product.category || inferCategory(product.series),
+        images: {
+          create: imagePaths.map((url, index) => ({
+            url,
+            alt: `${product.title} - image ${index + 1}`,
+            isPrimary: index === 0,
+            sortOrder: index,
+          })),
+        },
+      },
+    });
+
+    imported += 1;
+    if (imported % 20 === 0 || imported === products.length) {
+      console.log(
+        `  ...imported ${imported}/${products.length} [${product.series}] $${price.toFixed(2)}`
+      );
+    }
+  }
+
+  console.log(`Citizen import complete: ${imported} watches`);
+}
+
 async function seedTimexFromWatchesOfSwitzerland() {
   const brand = await prisma.brand.findUnique({ where: { slug: "timex" } });
   if (!brand) {
@@ -1198,6 +1301,8 @@ async function main() {
     });
   }
 
+  await seedDefaultShippingMethods();
+
   if (only === "cartier") {
     await seedCartierFromWatchesOfSwitzerland();
     console.log("Seeding complete!");
@@ -1218,6 +1323,12 @@ async function main() {
 
   if (only === "timex") {
     await seedTimexFromWatchesOfSwitzerland();
+    console.log("Seeding complete!");
+    return;
+  }
+
+  if (only === "citizen") {
+    await seedCitizenFromCitizenWatch();
     console.log("Seeding complete!");
     return;
   }
@@ -1254,6 +1365,8 @@ async function main() {
         await seedTissotFromWatchesOfSwitzerland();
       } else if (brandSlug === "timex") {
         await seedTimexFromWatchesOfSwitzerland();
+      } else if (brandSlug === "citizen") {
+        await seedCitizenFromCitizenWatch();
       } else if (
         brandSlug === "vacheron-constantin" ||
         brandSlug === "vacheron" ||
@@ -1283,6 +1396,7 @@ async function main() {
   await seedJacobCoFromMayors();
   await seedTissotFromWatchesOfSwitzerland();
   await seedTimexFromWatchesOfSwitzerland();
+  await seedCitizenFromCitizenWatch();
   await seedVacheronFromWatchesOfSwitzerland();
   await removeNonImportedWatches();
 

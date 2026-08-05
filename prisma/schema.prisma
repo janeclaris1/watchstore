@@ -295,6 +295,24 @@ model ContactEnquiry {
   @@index([createdAt])
 }
 
+model ShippingMethod {
+  id              String   @id @default(cuid())
+  name            String
+  slug            String   @unique
+  description     String?  @db.Text
+  price           Float
+  eta             String
+  deliveryDaysMin Int      @default(3)
+  deliveryDaysMax Int      @default(10)
+  sortOrder       Int      @default(0)
+  enabled         Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([enabled])
+  @@index([sortOrder])
+}
+
 model BlogPost {
   id          String    @id @default(cuid())
   title       String

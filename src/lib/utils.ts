@@ -45,6 +45,11 @@ export function toHalfListedPrice(listedPrice: number): number {
   return Math.round(Number(listedPrice) * 50) / 100;
 }
 
+/** 70% of a listed retail price, rounded to cents. */
+export function toSeventyPercentPrice(listedPrice: number): number {
+  return Math.round(Number(listedPrice) * 70) / 100;
+}
+
 /** Vacheron Constantin storefront range: \$1599.99–\$2349.99 (always ends in .99). */
 export function toVacheronPrice(seed: string): number {
   return toStorefrontPriceInRange(seed, 1599, 2349);

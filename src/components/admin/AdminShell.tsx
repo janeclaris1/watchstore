@@ -11,6 +11,7 @@ const NAV = [
   { href: "/admin", label: "Dashboard", exact: true },
   { href: "/admin/watches", label: "Watches" },
   { href: "/admin/orders", label: "Orders" },
+  { href: "/admin/shipping", label: "Shipping" },
   { href: "/admin/brands", label: "Brands" },
   { href: "/admin/posts", label: "Journal" },
   { href: "/admin/customers", label: "Customers" },

@@ -1,7 +1,10 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { stripe } from "@/lib/stripe";
-import { FALLBACK_SHIPPING_RATES } from "@/lib/shipping";
+import {
+  getActiveShippingMethods,
+  toStripeShippingOptions,
+} from "@/lib/shipping-methods";
 import { COUNTRIES } from "@/lib/countries";
 
 function toAbsoluteImageUrl(url: string | undefined | null): string | null {
@@ -121,6 +124,8 @@ export async function POST(req: Request) {
       process.env.NEXTAUTH_URL?.replace(/\/$/, "") ||
       "http://localhost:3000";
 
+    const shippingMethods = await getActiveShippingMethods();
+
     const session = await stripe.checkout.sessions.create({
       ui_mode: "embedded",
       mode: "payment",
@@ -139,23 +144,7 @@ export async function POST(req: Request) {
       shipping_address_collection: {
         allowed_countries: allowedShippingCountries() as never[],
       },
-      shipping_options: FALLBACK_SHIPPING_RATES.map((rate) => ({
-        shipping_rate_data: {
-          type: "fixed_amount" as const,
-          fixed_amount: {
-            amount: Math.round(rate.price * 100),
-            currency: "usd",
-          },
-          display_name: `${rate.name} · ${rate.eta}`,
-          delivery_estimate: {
-            minimum: { unit: "business_day" as const, value: 2 },
-            maximum: {
-              unit: "business_day" as const,
-              value: Math.max(rate.deliveryDays || 8, 3),
-            },
-          },
-        },
-      })),
+      shipping_options: toStripeShippingOptions(shippingMethods),
       return_url: `${baseUrl}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
       metadata: {
         orderId: order.id,

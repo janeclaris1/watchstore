@@ -1,36 +1,47 @@
 import { NextResponse } from "next/server";
-import { fetchLiveShippingRates } from "@/lib/shipping";
+import {
+  getActiveShippingMethods,
+  shippingDisplayName,
+} from "@/lib/shipping-methods";
 
 export const dynamic = "force-dynamic";
 
+export async function GET() {
+  try {
+    const methods = await getActiveShippingMethods();
+    return NextResponse.json({
+      rates: methods.map((method) => ({
+        id: method.slug,
+        name: method.name,
+        description: method.description || shippingDisplayName(method),
+        price: method.price,
+        currency: "USD",
+        eta: method.eta,
+        deliveryDays: method.deliveryDaysMax,
+      })),
+      source: "store",
+    });
+  } catch (error) {
+    console.error("[api/shipping/rates]", error);
+    return NextResponse.json({ error: "Failed to fetch shipping rates" }, { status: 500 });
+  }
+}
+
 export async function POST(req: Request) {
   try {
-    const body = await req.json();
-    const { address, email } = body || {};
-
-    if (!address?.street1 || !address?.city || !address?.postcode || !address?.country) {
-      return NextResponse.json(
-        { error: "Shipping address is required to quote rates" },
-        { status: 400 }
-      );
-    }
-
-    const result = await fetchLiveShippingRates({
-      name: address.name,
-      street1: address.street1,
-      street2: address.street2,
-      city: address.city,
-      state: address.state,
-      zip: address.postcode,
-      country: address.country,
-      phone: address.phone,
-      email,
-    });
-
+    await req.json().catch(() => ({}));
+    const methods = await getActiveShippingMethods();
     return NextResponse.json({
-      rates: result.rates,
-      source: result.source,
-      warning: result.source === "fallback" ? result.error : undefined,
+      rates: methods.map((method) => ({
+        id: method.slug,
+        name: method.name,
+        description: method.description || shippingDisplayName(method),
+        price: method.price,
+        currency: "USD",
+        eta: method.eta,
+        deliveryDays: method.deliveryDaysMax,
+      })),
+      source: "store",
     });
   } catch (error) {
     console.error("[api/shipping/rates]", error);

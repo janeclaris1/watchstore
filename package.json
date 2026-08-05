@@ -18,6 +18,7 @@
     "db:seed:jacob-co": "SEED_ONLY=jacob-co tsx prisma/seed.ts",
     "db:seed:tissot": "SEED_ONLY=tissot tsx prisma/seed.ts",
     "db:seed:timex": "SEED_ONLY=timex tsx prisma/seed.ts",
+    "db:seed:citizen": "SEED_ONLY=citizen tsx prisma/seed.ts",
     "db:seed:vacheron": "SEED_ONLY=vacheron-constantin tsx prisma/seed.ts",
     "db:seed:watchfinder-uk": "SEED_ONLY=watchfinder-uk tsx prisma/seed.ts",
     "images:download:daytona": "tsx scripts/download-wrist-collection.ts daytona",

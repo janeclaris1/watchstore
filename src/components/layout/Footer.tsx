@@ -12,6 +12,7 @@ const SHOP_LINKS = [
   { label: "Jacob & Co", href: "/watches/jacob-co" },
   { label: "Tissot", href: "/watches/tissot" },
   { label: "Timex", href: "/watches/timex" },
+  { label: "Citizen", href: "/watches/citizen" },
   { label: "Vacheron Constantin", href: "/watches/vacheron-constantin" },
 ];
 

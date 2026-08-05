@@ -33,6 +33,7 @@ const BRANDS = [
   { name: "Jacob & Co", slug: "jacob-co" },
   { name: "Tissot", slug: "tissot" },
   { name: "Timex", slug: "timex" },
+  { name: "Citizen", slug: "citizen" },
   { name: "Vacheron Constantin", slug: "vacheron-constantin" },
 ];
 

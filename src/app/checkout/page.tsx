@@ -85,7 +85,7 @@ export default function CheckoutPage() {
           <p className="text-3xl md:text-4xl font-semibold tracking-tight mb-8">
             {formatPrice(subtotal, currency)}
             <span className="block text-sm font-normal text-white/50 mt-1">
-              + shipping at next step
+              + standard shipping from $5
             </span>
           </p>
 
