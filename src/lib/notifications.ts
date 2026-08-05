@@ -5,10 +5,6 @@ import { resolveTrackingUrl } from "./order-tracking";
 const FROM_EMAIL = normalizeFromEmail(
   process.env.EMAIL_FROM || "COSY AURA WATCH STORE <onboarding@resend.dev>"
 );
-const ADMIN_EMAIL =
-  process.env.ADMIN_NOTIFICATION_EMAIL ||
-  process.env.ADMIN_EMAIL ||
-  "admin@cosyaura.us";
 const SITE_URL =
   process.env.NEXT_PUBLIC_SITE_URL ||
   process.env.NEXTAUTH_URL ||
@@ -19,6 +15,36 @@ const PLACEHOLDER_CHECKOUT_EMAIL = "pending@checkout.cosyaura.us";
 function normalizeFromEmail(raw: string): string {
   const trimmed = raw.trim();
   return trimmed.replace(/([^\s<])</, "$1 <");
+}
+
+function extractEmailAddress(value: string): string | null {
+  const trimmed = value.trim();
+  const bracketMatch = trimmed.match(/<([^>]+)>/);
+  if (bracketMatch?.[1]) return bracketMatch[1].trim();
+  if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) return trimmed;
+  return null;
+}
+
+export function getAdminNotificationEmails(): string[] {
+  const raw =
+    process.env.ADMIN_NOTIFICATION_EMAIL ||
+    process.env.ADMIN_EMAIL ||
+    "admin@cosyaura.us";
+
+  const emails = raw
+    .split(/[,;]/)
+    .map((entry) => extractEmailAddress(entry) || entry.trim())
+    .filter((entry) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(entry));
+
+  const seen = new Set<string>();
+  const unique: string[] = [];
+  for (const email of emails) {
+    const lower = email.toLowerCase();
+    if (seen.has(lower)) continue;
+    seen.add(lower);
+    unique.push(email);
+  }
+  return unique;
 }
 
 type OrderWithItems = {
@@ -42,12 +68,21 @@ export async function sendEmail({
   to,
   subject,
   html,
+  replyTo,
 }: {
-  to: string;
+  to: string | string[];
   subject: string;
   html: string;
+  replyTo?: string;
 }): Promise<{ ok: boolean; error?: string }> {
   const apiKey = process.env.RESEND_API_KEY;
+  const recipients = (Array.isArray(to) ? to : [to])
+    .map((entry) => extractEmailAddress(entry) || entry.trim())
+    .filter((entry) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(entry));
+
+  if (recipients.length === 0) {
+    return { ok: false, error: "No valid email recipients" };
+  }
 
   if (!apiKey) {
     // Never pretend mail was sent — that previously marked orders as emailed
@@ -67,7 +102,13 @@ export async function sendEmail({
         Authorization: `Bearer ${apiKey}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ from: FROM_EMAIL, to: [to], subject, html }),
+      body: JSON.stringify({
+        from: FROM_EMAIL,
+        to: recipients,
+        ...(replyTo ? { reply_to: replyTo } : {}),
+        subject,
+        html,
+      }),
     });
 
     const bodyText = await res.text();
@@ -77,7 +118,9 @@ export async function sendEmail({
     }
     try {
       const parsed = JSON.parse(bodyText) as { id?: string };
-      if (parsed.id) console.log("[email] Resend accepted:", parsed.id, "→", to);
+      if (parsed.id) {
+        console.log("[email] Resend accepted:", parsed.id, "→", recipients.join(", "));
+      }
     } catch {
       /* ignore */
     }
@@ -130,14 +173,21 @@ function emailShell(title: string, body: string) {
 
 export async function notifyOrderPaid(
   orderId: string
-): Promise<{ ok: boolean; error?: string }> {
+): Promise<{
+  ok: boolean;
+  customerOk: boolean;
+  adminOk: boolean;
+  error?: string;
+}> {
   const order = await prisma.order.findUnique({
     where: { id: orderId },
     include: {
       items: { include: { watch: { include: { brand: true } } } },
     },
   });
-  if (!order) return { ok: false, error: "Order not found" };
+  if (!order) {
+    return { ok: false, customerOk: false, adminOk: false, error: "Order not found" };
+  }
 
   if (
     !order.email ||
@@ -146,12 +196,15 @@ export async function notifyOrderPaid(
   ) {
     return {
       ok: false,
+      customerOk: false,
+      adminOk: false,
       error: "Order has no real customer email yet",
     };
   }
 
   const shortId = order.id.slice(0, 8).toUpperCase();
   const adminLink = `${SITE_URL}/admin/orders/${order.id}`;
+  const adminEmails = getAdminNotificationEmails();
 
   await createAdminNotification({
     type: "ORDER_PAID",
@@ -161,47 +214,76 @@ export async function notifyOrderPaid(
     orderId: order.id,
   });
 
-  const adminResult = await sendEmail({
-    to: ADMIN_EMAIL,
-    subject: `New order #${shortId} - ${formatPrice(order.total)}`,
-    html: emailShell(
-      `New paid order #${shortId}`,
-      `<p>Customer: <strong>${order.email}</strong></p>
-       <p>Total: <strong>${formatPrice(order.total)}</strong></p>
-       <table style="width:100%;border-collapse:collapse;">${orderItemsHtml(order)}</table>
-       <p style="margin-top:20px;"><a href="${adminLink}" style="background:#B8860B;color:#fff;padding:10px 18px;text-decoration:none;border-radius:4px;">View order</a></p>`
-    ),
-  });
+  const adminHtml = emailShell(
+    `New paid order #${shortId}`,
+    `<p>Customer: <strong>${order.email}</strong></p>
+     <p>Total: <strong>${formatPrice(order.total)}</strong></p>
+     <table style="width:100%;border-collapse:collapse;">${orderItemsHtml(order)}</table>
+     <p style="margin-top:20px;"><a href="${adminLink}" style="background:#B8860B;color:#fff;padding:10px 18px;text-decoration:none;border-radius:4px;">View order</a></p>`
+  );
+
+  const customerHtml = emailShell(
+    "Thank you for your order",
+    `<p>We've received your payment and are preparing your watch for dispatch.</p>
+     <p>Order reference: <strong>#${shortId}</strong></p>
+     <p>Total: <strong>${formatPrice(order.total)}</strong></p>
+     <table style="width:100%;border-collapse:collapse;">${orderItemsHtml(order)}</table>
+     <p style="margin-top:16px;">You'll receive another email when your order ships.</p>
+     <p style="margin-top:8px;"><a href="${SITE_URL}/track?ref=${shortId}&email=${encodeURIComponent(
+       order.email
+     )}" style="color:#B8860B;">Track your order</a></p>`
+  );
 
   const customerResult = await sendEmail({
     to: order.email,
     subject: `Order confirmed #${shortId} - COSY AURA WATCH STORE`,
-    html: emailShell(
-      "Thank you for your order",
-      `<p>We've received your payment and are preparing your watch for dispatch.</p>
-       <p>Order reference: <strong>#${shortId}</strong></p>
-       <p>Total: <strong>${formatPrice(order.total)}</strong></p>
-       <table style="width:100%;border-collapse:collapse;">${orderItemsHtml(order)}</table>
-       <p style="margin-top:16px;">You'll receive another email when your order ships.</p>
-       <p style="margin-top:8px;"><a href="${SITE_URL}/track?ref=${shortId}&email=${encodeURIComponent(
-         order.email
-       )}" style="color:#B8860B;">Track your order</a></p>`
-    ),
+    html: customerHtml,
   });
+
+  let adminResult = await sendEmail({
+    to: adminEmails,
+    replyTo: order.email,
+    subject: `New order #${shortId} - ${formatPrice(order.total)}`,
+    html: adminHtml,
+  });
+
+  if (!adminResult.ok) {
+    console.warn("[email] admin notification failed, retrying once:", adminResult.error);
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    adminResult = await sendEmail({
+      to: adminEmails,
+      replyTo: order.email,
+      subject: `New order #${shortId} - ${formatPrice(order.total)}`,
+      html: adminHtml,
+    });
+  }
 
   if (!customerResult.ok) {
     console.error("[email] customer confirmation failed:", customerResult.error);
     return {
       ok: false,
-      error: customerResult.error || adminResult.error || "Customer email failed",
+      customerOk: false,
+      adminOk: adminResult.ok,
+      error: customerResult.error || "Customer email failed",
     };
   }
 
   if (!adminResult.ok) {
-    console.error("[email] admin notification failed:", adminResult.error);
+    console.error(
+      "[email] admin notification failed:",
+      adminResult.error,
+      "recipients:",
+      adminEmails.join(", ")
+    );
+    return {
+      ok: false,
+      customerOk: true,
+      adminOk: false,
+      error: adminResult.error || "Admin email failed",
+    };
   }
 
-  return { ok: true };
+  return { ok: true, customerOk: true, adminOk: true };
 }
 
 export async function notifyOrderStatusChange(
@@ -285,7 +367,7 @@ export async function notifyContactEnquiry(enquiry: {
   });
 
   await sendEmail({
-    to: ADMIN_EMAIL,
+    to: getAdminNotificationEmails(),
     subject: `[Contact] ${enquiry.subject}`,
     html: emailShell(
       "New contact enquiry",

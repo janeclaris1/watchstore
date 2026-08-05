@@ -127,25 +127,39 @@ export async function fulfillCheckoutSession(
   }
 
   const emailResult = await notifyOrderPaid(orderId);
-  if (emailResult.ok) {
+  if (emailResult.customerOk) {
     await prisma.order.update({
       where: { id: orderId },
       data: { confirmationEmailedAt: new Date() },
     });
+  }
+
+  if (!emailResult.customerOk) {
+    console.error("[fulfill] customer email failed:", emailResult.error);
     return {
       ok: true,
-      reason: alreadyPaid ? "Already fulfilled" : undefined,
+      reason: "Paid but email failed",
       orderId,
-      emailSent: true,
+      emailSent: false,
+      emailError: emailResult.error,
     };
   }
 
-  console.error("[fulfill] email failed:", emailResult.error);
+  if (!emailResult.adminOk) {
+    console.error("[fulfill] admin email failed:", emailResult.error);
+    return {
+      ok: true,
+      reason: "Paid but admin email failed",
+      orderId,
+      emailSent: true,
+      emailError: emailResult.error,
+    };
+  }
+
   return {
     ok: true,
-    reason: "Paid but email failed",
+    reason: alreadyPaid ? "Already fulfilled" : undefined,
     orderId,
-    emailSent: false,
-    emailError: emailResult.error,
+    emailSent: true,
   };
 }

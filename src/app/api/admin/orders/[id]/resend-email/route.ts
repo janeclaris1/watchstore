@@ -76,7 +76,7 @@ export async function POST(
   }
 
   const result = await notifyOrderPaid(order.id);
-  if (!result.ok) {
+  if (!result.customerOk) {
     return NextResponse.json(
       { ok: false, error: result.error || "Email failed" },
       { status: 502 }
@@ -88,5 +88,10 @@ export async function POST(
     data: { confirmationEmailedAt: new Date() },
   });
 
-  return NextResponse.json({ ok: true, email: order.email });
+  return NextResponse.json({
+    ok: true,
+    email: order.email,
+    adminEmailSent: result.adminOk,
+    warning: result.adminOk ? undefined : result.error || "Admin email failed",
+  });
 }

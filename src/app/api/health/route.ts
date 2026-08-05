@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getAdminNotificationEmails } from "@/lib/notifications";
 
 export const dynamic = "force-dynamic";
 
@@ -42,9 +43,8 @@ export async function GET() {
         resendConfigured: Boolean(process.env.RESEND_API_KEY),
         fromConfigured: Boolean(from),
         fromFormatOk: from ? fromOk : false,
-        adminNotificationConfigured: Boolean(
-          process.env.ADMIN_NOTIFICATION_EMAIL || process.env.ADMIN_EMAIL
-        ),
+        adminNotificationConfigured: getAdminNotificationEmails().length > 0,
+        adminNotificationEmail: getAdminNotificationEmails().join(", "),
         siteUrl: process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXTAUTH_URL || null,
       },
       stripe: {
