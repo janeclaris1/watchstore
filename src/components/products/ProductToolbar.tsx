@@ -238,11 +238,12 @@ export function ProductToolbar({
               {open === pill.id && (
                 <div className="absolute left-0 top-full mt-2 z-40 w-[min(90vw,280px)] max-h-[60vh] overflow-y-auto rounded-xl border border-wf-border bg-white shadow-lg p-2">
                   {pill.id === "brands" && (
-                    <>
+                    <div className="flex flex-wrap items-center gap-1">
                       <DropdownItem
                         label="All brands"
                         active={!activeBrand}
                         onClick={() => selectBrand(null)}
+                        horizontal
                       />
                       {brands.map((brand) => (
                         <DropdownItem
@@ -250,9 +251,10 @@ export function ProductToolbar({
                           label={brand.name}
                           active={activeBrand === brand.slug}
                           onClick={() => selectBrand(brand.slug)}
+                          horizontal
                         />
                       ))}
-                    </>
+                    </div>
                   )}
 
                   {pill.id === "series" && (
@@ -591,10 +593,12 @@ function DropdownItem({
   label,
   active,
   onClick,
+  horizontal = false,
 }: {
   label: string;
   active?: boolean;
   onClick: () => void;
+  horizontal?: boolean;
 }) {
   return (
     <button
@@ -602,6 +606,7 @@ function DropdownItem({
       onClick={onClick}
       className={cn(
         "w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-wf-light transition-colors",
+        horizontal && "w-auto shrink-0 whitespace-nowrap",
         active && "bg-wf-light text-gold font-medium"
       )}
     >

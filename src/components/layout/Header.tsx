@@ -54,9 +54,11 @@ const GENDERS = [
 function NavDropdown({
   label,
   children,
+  horizontal = false,
 }: {
   label: string;
   children: React.ReactNode;
+  horizontal?: boolean;
 }) {
   const [open, setOpen] = useState(false);
 
@@ -71,7 +73,13 @@ function NavDropdown({
         <ChevronDown className="w-3.5 h-3.5" />
       </button>
       {open && (
-        <div className="absolute top-full left-0 bg-white border border-wf-border shadow-lg rounded-b-lg min-w-[200px] z-50 py-2">
+        <div
+          className={cn(
+            "absolute top-full left-0 bg-white border border-wf-border shadow-lg rounded-b-lg min-w-[200px] z-50 py-2",
+            horizontal &&
+              "flex flex-wrap items-center w-[50vw] max-w-[50vw] px-2"
+          )}
+        >
           {children}
         </div>
       )}
@@ -180,12 +188,12 @@ export function Header() {
       {/* Secondary Nav */}
       <nav className="hidden md:block border-b border-wf-border bg-white">
         <div className="max-w-7xl mx-auto px-4 flex items-center">
-          <NavDropdown label="Brands">
+          <NavDropdown label="Brands" horizontal>
             {BRANDS.map((brand) => (
               <Link
                 key={brand.slug}
                 href={`/watches/${brand.slug}`}
-                className="block px-4 py-2 text-sm hover:bg-wf-light hover:text-gold transition-colors"
+                className="block shrink-0 whitespace-nowrap px-4 py-2 text-sm hover:bg-wf-light hover:text-gold transition-colors"
               >
                 {brand.name}
               </Link>
@@ -247,12 +255,12 @@ export function Header() {
         <div className="px-4 py-4 space-y-4">
           <div>
             <p className="text-xs uppercase tracking-wider text-wf-gray mb-2">Brands</p>
-            <div className="grid grid-cols-2 gap-1">
+            <div className="flex w-1/2 flex-wrap items-center gap-1 pb-1">
               {BRANDS.map((brand) => (
                 <Link
                   key={brand.slug}
                   href={`/watches/${brand.slug}`}
-                  className="text-sm py-1.5 hover:text-gold"
+                  className="shrink-0 whitespace-nowrap px-3 py-1.5 text-sm hover:bg-wf-light hover:text-gold"
                   onClick={() => setMobileOpen(false)}
                 >
                   {brand.name}
