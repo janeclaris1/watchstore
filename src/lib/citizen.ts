@@ -2,7 +2,8 @@ import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 const BASE_URL = "https://www.citizenwatch.com";
-const COLLECTION_PATH = "/us/en/collection/mens";
+const MENS_COLLECTION_PATH = "/us/en/collection/mens";
+const WOMENS_COLLECTION_PATH = "/us/en/collection/womens";
 const USER_AGENT =
   "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
 const PAGE_SIZE = 48;
@@ -95,6 +96,11 @@ function widenJpegUrl(link: string, sku: string, index: number): string {
 
 function parseSeries(name: string, collection2?: string): string {
   const n = name.toLowerCase();
+  if (n.includes("citizen l") || n.startsWith("l ")) return "Citizen L";
+  if (n.includes("rainell")) return "Citizen L";
+  if (n.includes("bianca")) return "Citizen L";
+  if (n.includes("ceci")) return "Citizen L";
+  if (n.includes("arcly")) return "Citizen L";
   if (n.includes("promaster")) return "Promaster";
   if (n.includes("tsuyosa")) return "TSUYOSA";
   if (n.includes("attesa")) return "ATTESA";
@@ -103,15 +109,25 @@ function parseSeries(name: string, collection2?: string): string {
   if (n.includes("series8") || n.includes("series 8")) return "Series 8";
   if (n.includes("pcat")) return "PCAT";
   if (n.includes("corso")) return "Corso";
+  if (n.includes("fio")) return "Fio";
+  if (n.includes("veya")) return "Veya";
+  if (n.includes("peyten")) return "Peyten";
+  if (n.includes("calendrier")) return "Calendrier";
+  if (n.includes("silhouette")) return "Silhouette";
+  if (n.includes("petite palidoro") || n.includes("palidoro")) return "Petite Palidoro";
+  if (n.includes("axiom")) return "Axiom";
+  if (n.includes("sport luxury")) return "Sport Luxury";
   if (n.includes("rolan")) return "Rolan";
   if (n.includes("the citizen")) return "The Citizen";
   if (n.includes("navihawk")) return "Promaster";
   if (n.includes("blue angels")) return "Blue Angels";
   if (collection2) {
-    return collection2
-      .replace(/\s+(Eco|AUTO|Premier).*$/i, "")
-      .replace(/\s*\/.*$/, "")
-      .trim() || "Citizen";
+    return (
+      collection2
+        .replace(/\s+(Eco|AUTO|Premier).*$/i, "")
+        .replace(/\s*\/.*$/, "")
+        .trim() || "Citizen"
+    );
   }
   return name.split(/\s+/)[0] || "Citizen";
 }
@@ -124,7 +140,20 @@ function parseCategory(series: string, name: string, water?: string | null): str
   if (s.includes("chrono") || s.includes("skyhawk") || s.includes("gmt")) {
     return "Sport Watches";
   }
-  if (s.includes("corso") || s.includes("rolan") || s.includes("dress") || s.includes("classic")) {
+  if (
+    s.includes("citizen l") ||
+    s.includes("corso") ||
+    s.includes("rolan") ||
+    s.includes("dress") ||
+    s.includes("classic") ||
+    s.includes("fio") ||
+    s.includes("veya") ||
+    s.includes("silhouette") ||
+    s.includes("petite") ||
+    s.includes("calendrier") ||
+    s.includes("peyten") ||
+    s.includes("axiom")
+  ) {
     return "Dress Watches";
   }
   return "Sport Watches";
@@ -170,7 +199,10 @@ function parseYear(intro?: string | null): number | null {
   return m ? Number(m[1]) : null;
 }
 
-function mapHit(hit: CitizenHit): CitizenProduct | null {
+function mapHit(
+  hit: CitizenHit,
+  genderOverride?: CitizenProduct["gender"]
+): CitizenProduct | null {
   const rp = (hit.representedProduct || {}) as Record<string, unknown>;
   const sku = String(hit.productId || rp.id || "").trim();
   const title = String(hit.productName || "").trim();
@@ -216,7 +248,7 @@ function mapHit(hit: CitizenHit): CitizenProduct | null {
   }
   if (uniqueLinks.length === 0) return null;
 
-  // Skip strap / accessory SKUs that appear in the mens collection
+  // Skip strap / accessory SKUs that appear in collections
   const titleLower = title.toLowerCase();
   if (
     titleLower.includes("strap") ||
@@ -263,7 +295,7 @@ function mapHit(hit: CitizenHit): CitizenProduct | null {
       String(rp.c_bandType || "")
     ),
     dial,
-    gender: parseGender(String(rp.c_gender || "Men")),
+    gender: genderOverride || parseGender(String(rp.c_gender || "Men")),
     category: parseCategory(series, title, water),
     waterResistance: water,
     year: parseYear(intro),
@@ -272,14 +304,18 @@ function mapHit(hit: CitizenHit): CitizenProduct | null {
   };
 }
 
-export async function fetchCitizenMensCollection(): Promise<CitizenProduct[]> {
+async function fetchCitizenCollection(
+  collectionPath: string,
+  label: string,
+  genderOverride?: CitizenProduct["gender"]
+): Promise<CitizenProduct[]> {
   const all: CitizenProduct[] = [];
   const seen = new Set<string>();
   let offset = 0;
   let total = Infinity;
 
   while (offset < total) {
-    const url = `${BASE_URL}${COLLECTION_PATH}?offset=${offset}&limit=${PAGE_SIZE}`;
+    const url = `${BASE_URL}${collectionPath}?offset=${offset}&limit=${PAGE_SIZE}`;
     const response = await fetch(url, {
       headers: {
         "User-Agent": USER_AGENT,
@@ -288,7 +324,9 @@ export async function fetchCitizenMensCollection(): Promise<CitizenProduct[]> {
     });
 
     if (!response.ok) {
-      throw new Error(`Failed to fetch Citizen mens page at offset ${offset}: ${response.status}`);
+      throw new Error(
+        `Failed to fetch Citizen ${label} page at offset ${offset}: ${response.status}`
+      );
     }
 
     const html = await response.text();
@@ -302,7 +340,7 @@ export async function fetchCitizenMensCollection(): Promise<CitizenProduct[]> {
 
     let added = 0;
     for (const hit of hits) {
-      const product = mapHit(hit);
+      const product = mapHit(hit, genderOverride);
       if (!product || seen.has(product.sku)) continue;
       seen.add(product.sku);
       all.push(product);
@@ -310,7 +348,7 @@ export async function fetchCitizenMensCollection(): Promise<CitizenProduct[]> {
     }
 
     console.log(
-      `  Citizen page offset=${offset}: +${added} (total ${all.length}/${total})`
+      `  Citizen ${label} offset=${offset}: +${added} (total ${all.length}/${total})`
     );
 
     offset += PAGE_SIZE;
@@ -318,6 +356,14 @@ export async function fetchCitizenMensCollection(): Promise<CitizenProduct[]> {
   }
 
   return all;
+}
+
+export async function fetchCitizenMensCollection(): Promise<CitizenProduct[]> {
+  return fetchCitizenCollection(MENS_COLLECTION_PATH, "mens", "MENS");
+}
+
+export async function fetchCitizenWomensCollection(): Promise<CitizenProduct[]> {
+  return fetchCitizenCollection(WOMENS_COLLECTION_PATH, "womens", "WOMENS");
 }
 
 export async function downloadCitizenImages(

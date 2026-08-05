@@ -26,6 +26,7 @@ import {
 import {
   downloadCitizenImages,
   fetchCitizenMensCollection,
+  fetchCitizenWomensCollection,
 } from "../src/lib/citizen";
 import { seedDefaultShippingMethods } from "../src/lib/shipping-methods";
 import {
@@ -1059,6 +1060,180 @@ async function seedCitizenFromCitizenWatch() {
   console.log(`Citizen import complete: ${imported} watches`);
 }
 
+async function seedCitizenWomensFromCitizenWatch() {
+  const brand = await prisma.brand.findUnique({ where: { slug: "citizen" } });
+  if (!brand) {
+    console.warn("Citizen brand not found");
+    return;
+  }
+
+  console.log("Fetching Citizen women's collection from citizenwatch.com...");
+  const products = await fetchCitizenWomensCollection();
+
+  if (products.length === 0) {
+    console.warn("No Citizen women's products found");
+    return;
+  }
+
+  // Clear prior women's Citizen listings (by gender and slug prefix).
+  const existingWomens = await prisma.watch.findMany({
+    where: {
+      brandId: brand.id,
+      OR: [
+        { gender: "WOMENS" },
+        { slug: { startsWith: "citizen-womens-" } },
+        { slug: { startsWith: "citizen-w-" } },
+      ],
+    },
+    select: { id: true },
+  });
+  if (existingWomens.length > 0) {
+    const ids = existingWomens.map((w) => w.id);
+    await prisma.watchImage.deleteMany({ where: { watchId: { in: ids } } });
+    await prisma.wishlistItem.deleteMany({ where: { watchId: { in: ids } } });
+    const deleted = await prisma.watch.deleteMany({
+      where: {
+        id: { in: ids },
+        orderItems: { none: {} },
+      },
+    });
+    console.log(
+      `Removed ${deleted.count}/${ids.length} existing Citizen women's watches`
+    );
+  }
+
+  let imported = 0;
+  let updated = 0;
+  let skipped = 0;
+
+  for (const product of products) {
+    const series = await prisma.series.upsert({
+      where: {
+        brandId_slug: {
+          brandId: brand.id,
+          slug: slugify(product.series),
+        },
+      },
+      update: { name: product.series },
+      create: {
+        brandId: brand.id,
+        name: product.series,
+        slug: slugify(product.series),
+      },
+    });
+
+    let imagePaths: string[];
+    try {
+      imagePaths = await downloadCitizenImages(product);
+    } catch (error) {
+      console.warn(
+        `  skip ${product.reference || product.sku}: ${
+          error instanceof Error ? error.message : error
+        }`
+      );
+      skipped += 1;
+      continue;
+    }
+
+    const watchSlug = slugify(`citizen-w-${product.sku}`);
+    const price = toSeventyPercentPrice(product.originalPrice);
+    const description =
+      product.description +
+      ` Listed at ${price.toFixed(2)} USD (70% of $${product.originalPrice.toFixed(2)} MSRP).`;
+
+    const existing = await prisma.watch.findFirst({
+      where: {
+        brandId: brand.id,
+        OR: [{ slug: watchSlug }, { reference: product.reference }],
+      },
+      select: { id: true, slug: true },
+    });
+
+    if (existing) {
+      await prisma.watchImage.deleteMany({ where: { watchId: existing.id } });
+      await prisma.watch.update({
+        where: { id: existing.id },
+        data: {
+          seriesId: series.id,
+          model: product.title,
+          reference: product.reference,
+          description,
+          conditionReport: "New condition. Full details available on request.",
+          price,
+          condition: "UNWORN",
+          year: product.year,
+          movement: product.movement,
+          caseMaterial: product.caseMaterial,
+          caseSize: product.caseSize ?? "28mm",
+          strapMaterial: product.strapMaterial,
+          dial: product.dial ?? "Silver",
+          waterResistance: product.waterResistance ?? "50m",
+          gender: "WOMENS",
+          hasBox: true,
+          hasPapers: true,
+          featured: imported + updated < 12,
+          category: product.category || "Dress Watches",
+          images: {
+            create: imagePaths.map((url, index) => ({
+              url,
+              alt: `${product.title} - image ${index + 1}`,
+              isPrimary: index === 0,
+              sortOrder: index,
+            })),
+          },
+        },
+      });
+      updated += 1;
+    } else {
+      await prisma.watch.create({
+        data: {
+          slug: watchSlug,
+          brandId: brand.id,
+          seriesId: series.id,
+          model: product.title,
+          reference: product.reference,
+          description,
+          conditionReport: "New condition. Full details available on request.",
+          price,
+          condition: "UNWORN",
+          year: product.year,
+          movement: product.movement,
+          caseMaterial: product.caseMaterial,
+          caseSize: product.caseSize ?? "28mm",
+          strapMaterial: product.strapMaterial,
+          dial: product.dial ?? "Silver",
+          waterResistance: product.waterResistance ?? "50m",
+          gender: "WOMENS",
+          hasBox: true,
+          hasPapers: true,
+          featured: imported + updated < 12,
+          category: product.category || "Dress Watches",
+          images: {
+            create: imagePaths.map((url, index) => ({
+              url,
+              alt: `${product.title} - image ${index + 1}`,
+              isPrimary: index === 0,
+              sortOrder: index,
+            })),
+          },
+        },
+      });
+      imported += 1;
+    }
+
+    const done = imported + updated;
+    if (done % 20 === 0 || done + skipped === products.length) {
+      console.log(
+        `  ...${done}/${products.length} [${product.series}] $${price.toFixed(2)} (+${imported} new / ${updated} updated)`
+      );
+    }
+  }
+
+  console.log(
+    `Citizen women's import complete: ${imported} created, ${updated} updated, ${skipped} skipped`
+  );
+}
+
 async function seedTimexFromWatchesOfSwitzerland() {
   const brand = await prisma.brand.findUnique({ where: { slug: "timex" } });
   if (!brand) {
@@ -1329,6 +1504,12 @@ async function main() {
 
   if (only === "citizen") {
     await seedCitizenFromCitizenWatch();
+    console.log("Seeding complete!");
+    return;
+  }
+
+  if (only === "citizen-womens" || only === "citizen-women") {
+    await seedCitizenWomensFromCitizenWatch();
     console.log("Seeding complete!");
     return;
   }
