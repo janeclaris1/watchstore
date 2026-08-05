@@ -26,7 +26,7 @@ export type CheckoutShippingMethod = Pick<
   | "deliveryDaysMax"
 >;
 
-export function shippingDisplayName(method: CheckoutShippingMethod): string {
+export function shippingDisplayName(method: Pick<CheckoutShippingMethod, "name" | "eta">): string {
   return `${method.name} · ${method.eta}`;
 }
 

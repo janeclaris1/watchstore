@@ -206,7 +206,7 @@ function mapHit(hit: CitizenHit): CitizenProduct | null {
     }
   }
 
-  const uniqueLinks = [...new Set(imageLinks)].slice(0, MAX_IMAGES);
+  const uniqueLinks = Array.from(new Set(imageLinks)).slice(0, MAX_IMAGES);
   if (uniqueLinks.length === 0) return null;
 
   // Skip strap / accessory SKUs that appear in the mens collection
