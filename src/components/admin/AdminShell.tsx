@@ -6,6 +6,7 @@ import { signOut } from "next-auth/react";
 import { useEffect, useState } from "react";
 import { Bell } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { AdminNotificationListener } from "@/components/admin/AdminNotificationListener";
 
 const NAV = [
   { href: "/admin", label: "Dashboard", exact: true },
@@ -46,6 +47,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-screen bg-wf-light">
+      <AdminNotificationListener />
       <header className="bg-wf-black text-white">
         <div className="max-w-7xl mx-auto px-4 flex items-center justify-between h-14 gap-4">
           <Link href="/admin" className="font-playfair text-lg tracking-wider shrink-0">
