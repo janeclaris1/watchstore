@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
+import { CitizenBrandBanner } from "@/components/brands/CitizenBrandBanner";
 import { ProductCard } from "@/components/products/ProductCard";
 import { ActiveFilters } from "@/components/products/FilterSidebar";
 import { InfiniteWatchGrid } from "@/components/products/InfiniteWatchGrid";
@@ -86,9 +87,11 @@ async function BrandListing({
   ]);
 
   return (
-    <div className="max-w-[1500px] mx-auto px-4 py-6">
-      <Suspense>
-        <ProductToolbar
+    <>
+      {brandSlug === "citizen" && <CitizenBrandBanner />}
+      <div className="max-w-[1500px] mx-auto px-4 py-6">
+        <Suspense>
+          <ProductToolbar
           total={total}
           brandSlug={brandSlug}
           brands={options.brands}
@@ -109,7 +112,8 @@ async function BrandListing({
           emptyMessage={`No ${brand.name} watches found.`}
         />
       </Suspense>
-    </div>
+      </div>
+    </>
   );
 }
 
