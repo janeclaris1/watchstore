@@ -8,6 +8,7 @@ import { CookieConsent } from "@/components/layout/CookieConsent";
 import { Preloader } from "@/components/layout/Preloader";
 import { CartDrawer } from "@/components/cart/CartDrawer";
 import { NewsletterPopup } from "@/components/home/NewsletterPopup";
+import { GoogleAnalytics } from "@/components/analytics/GoogleAnalytics";
 import { Providers } from "@/components/Providers";
 
 const playfair = Playfair_Display({
@@ -73,6 +74,7 @@ export default async function RootLayout({
         />
       </head>
       <body>
+        <GoogleAnalytics />
         <Providers>
           {isMaintenance ? (
             children

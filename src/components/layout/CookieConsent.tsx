@@ -3,21 +3,14 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import {
+  COOKIE_CONSENT_STORAGE_KEY,
+  readConsent,
+  type CookiePrefs,
+  type ConsentRecord,
+} from "@/lib/cookie-consent";
 
-const STORAGE_KEY = "cosy-aura-cookie-consent";
-
-type CookiePrefs = {
-  essential: true;
-  analytics: boolean;
-  marketing: boolean;
-  personalization: boolean;
-};
-
-type ConsentRecord = {
-  choice: "accepted" | "rejected" | "custom";
-  prefs: CookiePrefs;
-  updatedAt: string;
-};
+const STORAGE_KEY = COOKIE_CONSENT_STORAGE_KEY;
 
 const DEFAULT_PREFS: CookiePrefs = {
   essential: true,
@@ -25,16 +18,6 @@ const DEFAULT_PREFS: CookiePrefs = {
   marketing: false,
   personalization: false,
 };
-
-function readConsent(): ConsentRecord | null {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return null;
-    return JSON.parse(raw) as ConsentRecord;
-  } catch {
-    return null;
-  }
-}
 
 function saveConsent(choice: ConsentRecord["choice"], prefs: CookiePrefs) {
   const record: ConsentRecord = {
