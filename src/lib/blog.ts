@@ -68,3 +68,15 @@ export function formatBlogPostedOn(date: Date | string | null | undefined) {
   const yyyy = value.getFullYear();
   return `${dd}/${mm}/${yyyy}`;
 }
+
+/** Pull H2 headings from markdown for an on-page table of contents. */
+export function extractBlogToc(content: string): Array<{ id: string; label: string }> {
+  const matches = content.matchAll(/^##\s+(.+)$/gm);
+  const items: Array<{ id: string; label: string }> = [];
+  for (const match of matches) {
+    const label = match[1].replace(/\*\*/g, "").trim();
+    if (!label) continue;
+    items.push({ id: slugify(label), label });
+  }
+  return items;
+}
